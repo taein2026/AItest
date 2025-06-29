@@ -1,22 +1,22 @@
-# analysis.py (수정 버전)
+# analysis.py (최종 수정 버전)
 
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.decomposition import PCA
 import plotly.express as px
 
-def run_analysis(df_main, disease_file, drug_file):
+def run_analysis(df_main, df_disease, df_drug):
     """
-    미리 읽어둔 메인 DataFrame과 나머지 파일들을 입력받아 분석을 수행하는 함수.
+    미리 읽어둔 3개의 DataFrame을 입력받아 분석을 수행하는 함수.
     """
-    # 2단계: 데이터 파일 불러오기 (메인 파일은 이미 읽었으므로 생략)
-    df = df_main.copy() # 원본을 보존하기 위해 복사본 사용
-    df_disease_map = pd.read_excel(disease_file, dtype={'상병코드': str})
-    df_drug_map = pd.read_excel(drug_file, dtype={'연합회코드': str})
+    # 2단계: 데이터 준비 (이미 읽었으므로 복사본 사용)
+    df = df_main.copy()
+    df_disease_map = df_disease.copy()
+    df_drug_map = df_drug.copy()
 
     # 3단계: 한글 해석 사전 만들기
-    df_disease_map['상병코드'] = df_disease_map['상병코드'].str.strip()
-    df_drug_map['연합회코드'] = df_drug_map['연합회코드'].str.strip()
+    df_disease_map['상병코드'] = df_disease_map['상병코드'].astype(str).str.strip()
+    df_drug_map['연합회코드'] = df_drug_map['연합회코드'].astype(str).str.strip()
     disease_dict = pd.Series(df_disease_map['표준상병명'].values, index=df_disease_map['상병코드']).to_dict()
     drug_dict = pd.Series(df_drug_map['연합회전용명'].values, index=df_drug_map['연합회코드']).to_dict()
     code_to_name_map = {**disease_dict, **drug_dict}
@@ -37,6 +37,7 @@ def run_analysis(df_main, disease_file, drug_file):
     
     # 7단계: 결과 분석 및 가공
     anomalies = df[df['anomaly_prediction'] == -1].sort_values(by='anomaly_score')
+    total_anomalies_count = len(anomalies)
     top_20_anomalies = anomalies.head(20)
     normal_profile = features.mean()
     
@@ -71,8 +72,5 @@ def run_analysis(df_main, disease_file, drug_file):
                      title="AI가 탐지한 이상치 분포 시각화 (-1: 이상치, 1: 정상)",
                      color_discrete_map={'1': 'blue', '-1': 'red'},
                      opacity=0.7)
-    
-      # ★★★ 전체 이상치 개수(total_anomalies_count)를 추가로 반환합니다. ★★★
-    total_anomalies_count = len(anomalies)
     
     return results, fig, len(df), total_anomalies_count
