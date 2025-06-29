@@ -1,4 +1,4 @@
-# app.py (파일 재사용 오류 최종 수정 버전)
+# app.py (근본 원인 해결 최종 버전)
 
 import streamlit as st
 from analysis import run_analysis
@@ -39,15 +39,12 @@ if not (main_file and disease_file and drug_file):
 if start_button:
     try:
         with st.spinner('AI가 수만 건의 데이터를 분석하고 있습니다... (약 1~2분 소요)'):
-            # 총 건수 계산을 위해 파일을 한 번 읽음
-            df_main_for_count = pd.read_csv(main_file, usecols=[0], encoding='cp949', low_memory=False)
-            total_claims = len(df_main_for_count)
             
-            # ★★★ 파일을 다시 읽기 위해 포인터(책갈피)를 맨 처음으로 되돌립니다. ★★★
-            main_file.seek(0)
+            # ★★★ 메인 파일을 여기서 딱 한 번만 읽습니다 ★★★
+            df_main = pd.read_csv(main_file, encoding='cp949', low_memory=False)
             
-            # 메인 분석 함수 실행
-            results, fig = run_analysis(main_file, disease_file, drug_file)
+            # ★★★ 미리 읽어둔 데이터를 분석 함수에 전달합니다 ★★★
+            results, fig, total_claims = run_analysis(df_main, disease_file, drug_file)
         
         st.success("🎉 분석이 완료되었습니다! 아래 대시보드에서 결과를 확인하세요.")
         st.markdown("---")
@@ -77,4 +74,5 @@ if start_button:
                     st.dataframe(res['reasons'])
                     
     except Exception as e:
-        st.error(f"분석 중 오류가 발생했습니다. 로그를 확인해주세요: {e}")
+        st.error(f"분석 중 오류가 발생했습니다: {e}")
+        st.exception(e) # 개발자 확인을 위해 상세 오류 내용도 함께 출력
