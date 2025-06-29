@@ -1,8 +1,8 @@
-# app.py (UI/UX 개선 최종 버전)
+# app.py (파일 재사용 오류 최종 수정 버전)
 
 import streamlit as st
-from analysis import run_analysis # 1단계에서 만든 analysis.py 파일을 불러옵니다.
-import pandas as pd # 총 진료 건수 계산을 위해 추가
+from analysis import run_analysis
+import pandas as pd
 
 # --- 페이지 기본 설정 ---
 st.set_page_config(
@@ -21,7 +21,6 @@ with st.sidebar:
     disease_file = st.file_uploader("② 상병명 매칭 테이블", type=['xlsx'])
     drug_file = st.file_uploader("③ 약물명 매칭 테이블", type=['xlsx'])
     
-    # 모든 파일이 업로드 되면 분석 버튼 활성화
     st.markdown("---")
     start_button = st.button("🚀 분석 시작하기", type="primary", use_container_width=True, disabled=not(main_file and disease_file and drug_file))
 
@@ -39,11 +38,13 @@ if not (main_file and disease_file and drug_file):
 # 2. 분석 시작 (버튼 클릭 후)
 if start_button:
     try:
-        # 스피너와 함께 분석 시작
         with st.spinner('AI가 수만 건의 데이터를 분석하고 있습니다... (약 1~2분 소요)'):
-            # 파일을 DataFrame으로 직접 읽어 총 건수 계산
-            df_main_for_count = pd.read_csv(main_file, usecols=[0], encoding='cp949')
+            # 총 건수 계산을 위해 파일을 한 번 읽음
+            df_main_for_count = pd.read_csv(main_file, usecols=[0], encoding='cp949', low_memory=False)
             total_claims = len(df_main_for_count)
+            
+            # ★★★ 파일을 다시 읽기 위해 포인터(책갈피)를 맨 처음으로 되돌립니다. ★★★
+            main_file.seek(0)
             
             # 메인 분석 함수 실행
             results, fig = run_analysis(main_file, disease_file, drug_file)
@@ -52,16 +53,13 @@ if start_button:
         st.markdown("---")
 
         # 3. 분석 결과 대시보드
-        
-        # 3-1. 핵심 요약 지표 (Metric)
         col1, col2, col3 = st.columns(3)
         col1.metric("총 진료 건수", f"{total_claims:,} 건")
-        col2.metric("탐지된 이상치", f"{len(results)} 건", f"{len(results)/total_claims:.2%}")
+        col2.metric("탐지된 이상치", f"{len(results)} 건", f"{(len(results)/total_claims):.2%}")
         col3.metric("분석된 특성(항목) 수", "500 개")
         
         st.markdown("---")
 
-        # 3-2. 탭으로 결과 분리
         tab1, tab2 = st.tabs(["📊 이상치 요약 및 그래프", "📑 Top 20 상세 분석"])
 
         with tab1:
@@ -73,7 +71,6 @@ if start_button:
             st.header("가장 의심스러운 진료 Top 20")
             st.info("Rank가 높을수록 패턴이 이질적이라는 의미입니다. 각 항목을 클릭하여 상세 원인을 확인하세요.")
             
-            # Expander(확장 메뉴)를 사용해 각 결과를 깔끔하게 표시
             for res in reversed(results):
                 with st.expander(f"**Rank {res['rank']}**: 환자번호 {res['patient_id']} (진료일: {res['date']})"):
                     st.write("▶ **이 진료가 이상치로 판단된 핵심 이유 (가장 희귀한 조합 Top 5):**")
