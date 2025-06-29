@@ -1,4 +1,4 @@
-# app.py (타이핑 효과 복구 최종 버전)
+# app.py (최종 퍼포먼스 및 안정성 강화 버전)
 
 import streamlit as st
 import pandas as pd
@@ -39,8 +39,15 @@ with st.sidebar:
     uploaded_disease_file = st.file_uploader("② 상병명 매칭 테이블", type=['xlsx'])
     uploaded_drug_file = st.file_uploader("③ 약물명 매칭 테이블", type=['xlsx'])
     
+    # 파일이 모두 업로드되면, '파일 보관함'에 데이터를 저장하는 버튼 생성
     if uploaded_main_file and uploaded_disease_file and uploaded_drug_file:
-        st.session_state['files_ready'] = True
+        if st.button("✔️ 업로드 파일 저장", use_container_width=True):
+            with st.spinner("파일을 읽고 있습니다..."):
+                st.session_state['df_main'] = pd.read_csv(uploaded_main_file, encoding='cp949', low_memory=False)
+                st.session_state['df_disease'] = pd.read_excel(uploaded_disease_file, dtype={'상병코드': str})
+                st.session_state['df_drug'] = pd.read_excel(uploaded_drug_file, dtype={'연합회코드': str})
+                st.session_state['files_ready'] = True
+                st.success("파일 저장 완료! 분석을 시작하세요.")
 
     st.markdown("---")
     start_button = st.button("🚀 AI 분석 실행", type="primary", use_container_width=True, disabled='files_ready' not in st.session_state)
@@ -51,7 +58,7 @@ st.markdown("---")
 
 # 초기 화면
 if not start_button:
-    st.info("⬅️ 왼쪽 사이드바에서 분석할 파일 3개를 모두 업로드하고, 'AI 분석 실행' 버튼을 눌러주세요.")
+    st.info("⬅️ 왼쪽 사이드바에서 파일 3개를 모두 업로드하고 '업로드 파일 저장' 버튼을 누른 후, 'AI 분석 실행' 버튼을 눌러주세요.")
     st.image("https://storage.googleapis.com/gweb-cloud-ai-generative-ai-proserve-media/images/dashboard_professional.png", use_column_width=True)
 
 # 분석 시작
@@ -61,48 +68,39 @@ if start_button:
             # --- AI 분석 프로세스 바 ---
             st.header("AI 분석 프로세스")
             step1, step2, step3, step4 = st.columns(4)
-            s1_placeholder, s2_placeholder, s3_placeholder, s4_placeholder = step1.empty(), step2.empty(), step3.empty(), step4.empty()
-            placeholders = [s1_placeholder, s2_placeholder, s3_placeholder, s4_placeholder]
-            steps = ["1. AI 학습 중", "2. AI 분석 중", "3. AI 탐지 및 분류 중", "4. AI 보고서 작성 중"]
+            placeholders = [step1.empty(), step2.empty(), step3.empty(), step4.empty()]
+            steps = ["1. 데이터 로딩", "2. 데이터 학습", "3. 이상치 탐지", "4. 보고서 생성"]
 
             for i, placeholder in enumerate(placeholders):
                 placeholder.info(f'**{steps[i]}**\n\n*상태: ⏳ 대기 중*')
 
             time.sleep(1)
-            s1_placeholder.info(f'**{steps[0]}**\n\n*상태: ⚙️ 진행 중...*')
-            df_main = pd.read_csv(uploaded_main_file, encoding='cp949', low_memory=False)
-            df_disease = pd.read_excel(uploaded_disease_file, dtype={'상병코드': str})
-            df_drug = pd.read_excel(uploaded_drug_file, dtype={'연합회코드': str})
+            placeholders[0].info(f'**{steps[0]}**\n\n*상태: ⚙️ 진행 중...*')
             time.sleep(1.5)
-            s1_placeholder.success(f'**{steps[0]}**\n\n*상태: ✅ 완료*')
+            placeholders[0].success(f'**{steps[0]}**\n\n*상태: ✅ 완료*')
 
-            s2_placeholder.info(f'**{steps[1]}**\n\n*상태: ⚙️ 진행 중...*')
-            results, fig, total_claims, total_anomalies = run_analysis(df_main, df_disease, df_drug)
-            s2_placeholder.success(f'**{steps[1]}**\n\n*상태: ✅ 완료*')
+            placeholders[1].info(f'**{steps[1]}**\n\n*상태: ⚙️ 진행 중...*')
+            results, fig, total_claims, total_anomalies = run_analysis(
+                st.session_state['df_main'],
+                st.session_state['df_disease'],
+                st.session_state['df_drug']
+            )
+            placeholders[1].success(f'**{steps[1]}**\n\n*상태: ✅ 완료*')
 
-            s3_placeholder.info(f'**{steps[2]}**\n\n*상태: ⚙️ 진행 중...*')
+            placeholders[2].info(f'**{steps[2]}**\n\n*상태: ⚙️ 진행 중...*')
             time.sleep(2)
-            s3_placeholder.success(f'**{steps[2]}**\n\n*상태: ✅ 완료*')
+            placeholders[2].success(f'**{steps[2]}**\n\n*상태: ✅ 완료*')
 
-            s4_placeholder.info(f'**{steps[3]}**\n\n*상태: ⚙️ 진행 중...*')
+            placeholders[3].info(f'**{steps[3]}**\n\n*상태: ⚙️ 진행 중...*')
             time.sleep(1.5)
-            s4_placeholder.success(f'**{steps[3]}**\n\n*상태: ✅ 완료*')
+            placeholders[3].success(f'**{steps[3]}**\n\n*상태: ✅ 완료*')
             
             st.success("🎉 모든 분석 과정이 성공적으로 완료되었습니다!")
             st.markdown("---")
 
-            # --- AI 최종 분석 브리핑 (타이핑 효과 적용) ---
+            # --- AI 최종 분석 브리핑 (문장 단위 출력) ---
             st.header("🔬 AI 최종 분석 브리핑")
             
-            def stream_text(text_to_stream):
-                placeholder = st.empty()
-                full_response = ""
-                for chunk in text_to_stream:
-                    full_response += chunk
-                    time.sleep(0.015)
-                    placeholder.markdown(full_response + "▌", unsafe_allow_html=True)
-                placeholder.markdown(full_response, unsafe_allow_html=True)
-
             patient_ids = [res['patient_id'] for res in results]
             if patient_ids:
                 most_common_patient = pd.Series(patient_ids).mode()[0]
@@ -115,8 +113,16 @@ if start_button:
             finding_text = f"> **핵심 발견:** {key_finding}"
             recommendation_text = f"> **권장 조치:** 이상치로 탐지된 진료 건들의 상세 분석을 통해, 이례적인 처방/진단 조합의 의학적 타당성을 확인하십시오."
             
-            full_briefing_text = f"{summary_text}\n\n{finding_text}\n\n{recommendation_text}"
-            stream_text(full_briefing_text)
+            summary_placeholder = st.empty()
+            finding_placeholder = st.empty()
+            reco_placeholder = st.empty()
+
+            time.sleep(1)
+            summary_placeholder.markdown(summary_text, unsafe_allow_html=True)
+            time.sleep(1.5)
+            finding_placeholder.markdown(finding_text, unsafe_allow_html=True)
+            time.sleep(1.5)
+            reco_placeholder.markdown(recommendation_text, unsafe_allow_html=True)
             
             st.markdown("---")
             
@@ -145,4 +151,4 @@ if start_button:
             st.error(f"분석 중 오류가 발생했습니다: {e}")
             st.exception(e)
     else:
-        st.warning("🚨 분석을 시작하기 전에 왼쪽 사이드바에서 파일 3개를 모두 업로드해주세요!")
+        st.warning("🚨 분석을 시작하기 전에 왼쪽 사이드바에서 파일 3개를 모두 업로드하고 '업로드 파일 저장' 버튼을 눌러주세요!")
