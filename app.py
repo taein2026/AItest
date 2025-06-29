@@ -20,10 +20,10 @@ if st.button("분석 시작하기"):
             # 1단계에서 만든 함수를 호출하여 분석 실행
             results, fig = run_analysis(main_file, disease_file, drug_file)
         
-        st.success("분석이 완료되었습니다!")
+        st.success("AI 분석이 완료되었습니다!")
         
         # 분석 결과 출력
-        st.header("2. Top 20 이상 의심 진료 분석 결과")
+        st.header("2. AI가 탐지한 Top 20 이상 의심 진료 분석 결과")
         for res in reversed(results): # 순위를 20위부터 보여주기 위해 reversed 사용
             st.subheader(f"Rank {res['rank']}: 환자번호 {res['patient_id']} ({res['date']})")
             st.write("▶ 이 진료가 이상치로 판단된 핵심 이유 (가장 희귀한 조합 Top 5):")
