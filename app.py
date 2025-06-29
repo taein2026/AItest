@@ -1,8 +1,9 @@
-# app.py (근본 원인 해결 최종 버전)
+# app.py (최종 완성 버전)
 
 import streamlit as st
-from analysis import run_analysis
 import pandas as pd
+import time  # 분석 과정 시각화를 위해 time 라이브러리 추가
+from analysis import run_analysis
 
 # --- 페이지 기본 설정 ---
 st.set_page_config(
@@ -16,11 +17,9 @@ st.set_page_config(
 with st.sidebar:
     st.title("📄 파일 업로드")
     st.info("분석에 필요한 파일 3개를 모두 업로드해주세요.")
-    
     main_file = st.file_uploader("① 메인 진료 데이터", type=['csv'])
     disease_file = st.file_uploader("② 상병명 매칭 테이블", type=['xlsx'])
     drug_file = st.file_uploader("③ 약물명 매칭 테이블", type=['xlsx'])
-    
     st.markdown("---")
     start_button = st.button("🚀 분석 시작하기", type="primary", use_container_width=True, disabled=not(main_file and disease_file and drug_file))
 
@@ -28,31 +27,34 @@ with st.sidebar:
 st.title("🤖 AI 의료기관 이상치 탐지 대시보드")
 st.markdown("---")
 
-
-# 1. 초기 화면 (파일 업로드 전)
+# 초기 화면
 if not (main_file and disease_file and drug_file):
     st.info("⬅️ 왼쪽 사이드바에서 분석할 파일 3개를 모두 업로드한 후, '분석 시작하기' 버튼을 눌러주세요.")
     st.image("https://storage.googleapis.com/gweb-cloud-ai-generative-ai-proserve-media/images/dashboard_placeholder.png", use_column_width=True)
 
-
-# 2. 분석 시작 (버튼 클릭 후)
+# 분석 시작
 if start_button:
     try:
-        with st.spinner('AI가 수만 건의 데이터를 분석하고 있습니다... (약 1~2분 소요)'):
-            
-            # ★★★ 메인 파일을 여기서 딱 한 번만 읽습니다 ★★★
+        # ★★★ 'AI가 일하는 것처럼' 보이는 시각적 효과 추가 ★★★
+        with st.status("AI가 분석을 시작합니다...", expanded=True) as status:
+            st.write("데이터 로딩 및 전처리 중...")
+            time.sleep(2)
             df_main = pd.read_csv(main_file, encoding='cp949', low_memory=False)
-            
-            # ★★★ 미리 읽어둔 데이터를 분석 함수에 전달합니다 ★★★
-            results, fig, total_claims = run_analysis(df_main, disease_file, drug_file)
+            st.write("AI 모델 학습 및 패턴 분석 중...")
+            time.sleep(3)
+            results, fig, total_claims, total_anomalies = run_analysis(df_main, disease_file, drug_file)
+            st.write("결과 분석 및 대시보드 생성 중...")
+            time.sleep(2)
+            status.update(label="분석 완료!", state="complete", expanded=False)
         
         st.success("🎉 분석이 완료되었습니다! 아래 대시보드에서 결과를 확인하세요.")
         st.markdown("---")
 
-        # 3. 분석 결과 대시보드
+        # 3. 분석 결과 대시보드 (통계 수정)
         col1, col2, col3 = st.columns(3)
         col1.metric("총 진료 건수", f"{total_claims:,} 건")
-        col2.metric("탐지된 이상치", f"{len(results)} 건", f"{(len(results)/total_claims):.2%}")
+        # ★★★ '탐지된 이상치' 개수를 정확한 값으로 수정 ★★★
+        col2.metric("탐지된 이상치", f"{total_anomalies:,} 건", f"{(total_anomalies/total_claims):.2%}")
         col3.metric("분석된 특성(항목) 수", "500 개")
         
         st.markdown("---")
@@ -75,4 +77,4 @@ if start_button:
                     
     except Exception as e:
         st.error(f"분석 중 오류가 발생했습니다: {e}")
-        st.exception(e) # 개발자 확인을 위해 상세 오류 내용도 함께 출력
+        st.exception(e)
