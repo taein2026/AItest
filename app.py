@@ -63,7 +63,7 @@ if start_button:
             step1, step2, step3, step4 = st.columns(4)
             s1_placeholder, s2_placeholder, s3_placeholder, s4_placeholder = step1.empty(), step2.empty(), step3.empty(), step4.empty()
             placeholders = [s1_placeholder, s2_placeholder, s3_placeholder, s4_placeholder]
-            steps = ["1. AI 학습 중", "2. AI 분석 중", "3. AI 탐지 및 분류 중", "4. AI 보고서 준비"]
+            steps = ["1. AI 학습 중", "2. AI 분석 중", "3. AI 탐지 및 분류 중", "4. AI 보고서 작성 중"]
 
             for i, placeholder in enumerate(placeholders):
                 placeholder.info(f'**{steps[i]}**\n\n*상태: ⏳ 대기 중*')
