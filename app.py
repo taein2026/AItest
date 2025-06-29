@@ -1,4 +1,4 @@
-# app.py (프로세스 바 최종 버전)
+# app.py (타이핑 효과 복구 최종 버전)
 
 import streamlit as st
 import pandas as pd
@@ -39,16 +39,11 @@ with st.sidebar:
     uploaded_disease_file = st.file_uploader("② 상병명 매칭 테이블", type=['xlsx'])
     uploaded_drug_file = st.file_uploader("③ 약물명 매칭 테이블", type=['xlsx'])
     
-    # 파일이 모두 업로드되면, '파일 보관함'에 데이터를 저장하는 버튼 생성
     if uploaded_main_file and uploaded_disease_file and uploaded_drug_file:
-        if st.button("✔️ 업로드 완료", use_container_width=True):
-            st.session_state['df_main'] = pd.read_csv(uploaded_main_file, encoding='cp949', low_memory=False)
-            st.session_state['df_disease'] = pd.read_excel(uploaded_disease_file, dtype={'상병코드': str})
-            st.session_state['df_drug'] = pd.read_excel(uploaded_drug_file, dtype={'연합회코드': str})
-            st.success("파일 저장 완료!")
+        st.session_state['files_ready'] = True
 
     st.markdown("---")
-    start_button = st.button("🚀 AI 분석 실행", type="primary", use_container_width=True, disabled='df_main' not in st.session_state)
+    start_button = st.button("🚀 AI 분석 실행", type="primary", use_container_width=True, disabled='files_ready' not in st.session_state)
 
 # --- 메인 화면 ---
 st.title("🧠 AI 이상 진료 탐지 시스템 v3.0")
@@ -56,67 +51,82 @@ st.markdown("---")
 
 # 초기 화면
 if not start_button:
-    st.info("⬅️ 왼쪽 사이드바에서 분석할 파일 3개를 모두 업로드하고 '업로드 완료' 버튼을 누른 후, 'AI 분석 실행' 버튼을 눌러주세요.")
+    st.info("⬅️ 왼쪽 사이드바에서 분석할 파일 3개를 모두 업로드하고, 'AI 분석 실행' 버튼을 눌러주세요.")
     st.image("https://storage.googleapis.com/gweb-cloud-ai-generative-ai-proserve-media/images/dashboard_professional.png", use_column_width=True)
 
 # 분석 시작
 if start_button:
-    if 'df_main' in st.session_state:
+    if 'files_ready' in st.session_state:
         try:
+            # --- AI 분석 프로세스 바 ---
             st.header("AI 분석 프로세스")
-            
             step1, step2, step3, step4 = st.columns(4)
-            s1_placeholder = step1.empty()
-            s2_placeholder = step2.empty()
-            s3_placeholder = step3.empty()
-            s4_placeholder = step4.empty()
+            s1_placeholder, s2_placeholder, s3_placeholder, s4_placeholder = step1.empty(), step2.empty(), step3.empty(), step4.empty()
+            placeholders = [s1_placeholder, s2_placeholder, s3_placeholder, s4_placeholder]
+            steps = ["1. 데이터 로딩", "2. 데이터 학습", "3. 이상치 탐지", "4. 보고서 생성"]
 
-            s1_placeholder.info('**1. 데이터 로딩**\n\n*상태: ⏳ 대기 중*')
-            s2_placeholder.info('**2. 데이터 학습**\n\n*상태: ⏳ 대기 중*')
-            s3_placeholder.info('**3. 이상치 탐지**\n\n*상태: ⏳ 대기 중*')
-            s4_placeholder.info('**4. 보고서 생성**\n\n*상태: ⏳ 대기 중*')
+            for i, placeholder in enumerate(placeholders):
+                placeholder.info(f'**{steps[i]}**\n\n*상태: ⏳ 대기 중*')
 
             time.sleep(1)
-            s1_placeholder.info('**1. 데이터 로딩**\n\n*상태: ⚙️ 진행 중...*')
-            df_main = st.session_state['df_main']
-            df_disease = st.session_state['df_disease']
-            df_drug = st.session_state['df_drug']
+            s1_placeholder.info(f'**{steps[0]}**\n\n*상태: ⚙️ 진행 중...*')
+            df_main = pd.read_csv(uploaded_main_file, encoding='cp949', low_memory=False)
+            df_disease = pd.read_excel(uploaded_disease_file, dtype={'상병코드': str})
+            df_drug = pd.read_excel(uploaded_drug_file, dtype={'연합회코드': str})
             time.sleep(1.5)
-            s1_placeholder.success('**1. 데이터 로딩**\n\n*상태: ✅ 완료*')
+            s1_placeholder.success(f'**{steps[0]}**\n\n*상태: ✅ 완료*')
 
-            s2_placeholder.info('**2. 데이터 학습**\n\n*상태: ⚙️ 진행 중...*')
+            s2_placeholder.info(f'**{steps[1]}**\n\n*상태: ⚙️ 진행 중...*')
             results, fig, total_claims, total_anomalies = run_analysis(df_main, df_disease, df_drug)
-            s2_placeholder.success('**2. 데이터 학습**\n\n*상태: ✅ 완료*')
+            s2_placeholder.success(f'**{steps[1]}**\n\n*상태: ✅ 완료*')
 
-            s3_placeholder.info('**3. 이상치 탐지**\n\n*상태: ⚙️ 진행 중...*')
+            s3_placeholder.info(f'**{steps[2]}**\n\n*상태: ⚙️ 진행 중...*')
             time.sleep(2)
-            s3_placeholder.success('**3. 이상치 탐지**\n\n*상태: ✅ 완료*')
+            s3_placeholder.success(f'**{steps[2]}**\n\n*상태: ✅ 완료*')
 
-            s4_placeholder.info('**4. 보고서 생성**\n\n*상태: ⚙️ 진행 중...*')
+            s4_placeholder.info(f'**{steps[3]}**\n\n*상태: ⚙️ 진행 중...*')
             time.sleep(1.5)
-            s4_placeholder.success('**4. 보고서 생성**\n\n*상태: ✅ 완료*')
+            s4_placeholder.success(f'**{steps[3]}**\n\n*상태: ✅ 완료*')
             
             st.success("🎉 모든 분석 과정이 성공적으로 완료되었습니다!")
             st.markdown("---")
 
+            # --- AI 최종 분석 브리핑 (타이핑 효과 적용) ---
             st.header("🔬 AI 최종 분석 브리핑")
+            
+            def stream_text(text_to_stream):
+                placeholder = st.empty()
+                full_response = ""
+                for chunk in text_to_stream:
+                    full_response += chunk
+                    time.sleep(0.015)
+                    placeholder.markdown(full_response + "▌", unsafe_allow_html=True)
+                placeholder.markdown(full_response, unsafe_allow_html=True)
+
             patient_ids = [res['patient_id'] for res in results]
             if patient_ids:
                 most_common_patient = pd.Series(patient_ids).mode()[0]
                 count = patient_ids.count(most_common_patient)
-                key_finding = f"가장 주목할 만한 패턴은 특정 환자에게서 이상치가 집중적으로 발견된 점입니다. 특히 **환자번호 `{most_common_patient}`**는 Top 20 리스트에 **{count}회** 등장하여, 해당 환자의 진료 이력에 대한 심층 검토가 필요합니다."
+                key_finding = f"가장 주목할 만한 패턴은 특정 환자에게서 이상치가 집중적으로 발견된 점입니다. 특히 **환자번호 `{most_common_patient}`**는 Top 20 리스트에 <span style='color: #00f4d4;'>**{count}회**</span> 등장하여, 해당 환자의 진료 이력에 대한 심층 검토가 필요합니다."
             else:
                 key_finding = "탐지된 이상치 중에서 특별히 집중되는 패턴은 발견되지 않았습니다."
-            summary_text = f"> **분석 요약:** 총 **{total_claims:,}**건의 진료 데이터에서 **{total_anomalies:,}**건의 통계적 이상 패턴을 식별했습니다."
-            st.markdown(summary_text)
-            st.markdown(f"> **핵심 발견:** {key_finding}")
-            st.markdown("> **권장 조치:** 이상치로 탐지된 진료 건들의 상세 분석을 통해, 이례적인 처방/진단 조합의 의학적 타당성을 확인하십시오.")
+            
+            summary_text = f"> **분석 요약:** 총 <span style='color: #00f4d4;'>**{total_claims:,}**</span>건의 진료 기록을 분석하여, <span style='color: #00f4d4;'>**{total_anomalies:,}**</span>건의 통계적 이상 패턴을 식별했습니다."
+            finding_text = f"> **핵심 발견:** {key_finding}"
+            recommendation_text = f"> **권장 조치:** 이상치로 탐지된 진료 건들의 상세 분석을 통해, 이례적인 처방/진단 조합의 의학적 타당성을 확인하십시오."
+            
+            full_briefing_text = f"{summary_text}\n\n{finding_text}\n\n{recommendation_text}"
+            stream_text(full_briefing_text)
+            
             st.markdown("---")
+            
+            # --- 분석 결과 상세 대시보드 ---
             st.header("분석 결과 상세 대시보드")
             col1, col2, col3 = st.columns(3)
             col1.metric("총 진료 건수", f"{total_claims:,} 건")
             col2.metric("탐지된 이상치", f"{total_anomalies:,} 건", f"상위 {(total_anomalies/total_claims):.2%}")
             col3.metric("분석된 특성(항목) 수", "500 개")
+            
             tab1, tab2 = st.tabs(["📊 **이상치 요약 및 그래프**", "📑 **Top 20 상세 분석**"])
             with tab1:
                 st.subheader("이상치 분포 시각화")
@@ -135,4 +145,4 @@ if start_button:
             st.error(f"분석 중 오류가 발생했습니다: {e}")
             st.exception(e)
     else:
-        st.warning("🚨 분석을 시작하기 전에 왼쪽 사이드바에서 파일 3개를 모두 업로드하고 '업로드 완료' 버튼을 눌러주세요!")
+        st.warning("🚨 분석을 시작하기 전에 왼쪽 사이드바에서 파일 3개를 모두 업로드해주세요!")
