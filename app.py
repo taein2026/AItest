@@ -1,4 +1,4 @@
-# app.py (퍼포먼스 및 시각화 최종 버전)
+# app.py (트리 구조 및 색상 강조 최종 버전)
 
 import streamlit as st
 import pandas as pd
@@ -24,16 +24,6 @@ def load_lottieurl(url: str):
             return r.json()
     except requests.exceptions.RequestException:
         return None
-
-# --- 스타일 정의 (굵고 큰 글씨) ---
-st.markdown("""
-<style>
-.big-font {
-    font-size:22px !important;
-    font-weight: bold;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # --- 사이드바 ---
 with st.sidebar:
@@ -63,49 +53,45 @@ if not start_button:
 if start_button:
     try:
         # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        #                   "AI 분석 프로세스 바" 퍼포먼스
+        #                   "AI 분석 프로세스 트리" 퍼포먼스
         # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         st.header("AI 분석 프로세스")
         
-        # 4개의 단계 컬럼 생성
-        step1, step2, step3, step4 = st.columns(4)
-        
-        # 초기 상태 설정
-        step1_placeholder = step1.empty()
-        step2_placeholder = step2.empty()
-        step3_placeholder = step3.empty()
-        step4_placeholder = step4.empty()
-
-        step1_placeholder.info('**1. 데이터 검증**\n\n*상태: ⏳ 대기 중*')
-        step2_placeholder.info('**2. AI 모델 학습**\n\n*상태: ⏳ 대기 중*')
-        step3_placeholder.info('**3. 이상 패턴 탐색**\n\n*상태: ⏳ 대기 중*')
-        step4_placeholder.info('**4. 최종 보고서 생성**\n\n*상태: ⏳ 대기 중*')
+        # 트리 구조를 표시할 공간 마련
+        tree_placeholder = st.empty()
 
         # 단계별 진행
-        time.sleep(1)
-        step1_placeholder.info('**1. 데이터 검증**\n\n*상태: ⚙️ 진행 중...*')
-        df_main = pd.read_csv(main_file, encoding='cp949', low_memory=False)
+        tree_text = "```\n"
+        tree_text += "AI 분석 시작\n"
+        tree_text += "└─ ⚙️ 1. 데이터 검증 및 전처리...\n"
+        tree_placeholder.markdown(tree_text + "```")
         time.sleep(1.5)
-        step1_placeholder.success('**1. 데이터 검증**\n\n*상태: ✅ 완료*')
+        df_main = pd.read_csv(main_file, encoding='cp949', low_memory=False)
 
-        step2_placeholder.info('**2. AI 모델 학습**\n\n*상태: ⚙️ 진행 중...*')
+        tree_text = tree_text.replace("⚙️ 1. 데이터 검증 및 전처리...", "✅ 1. 데이터 검증 및 전처리")
+        tree_text += "   └─ ⚙️ 2. AI 모델 학습 및 패턴 분석...\n"
+        tree_placeholder.markdown(tree_text + "```")
         time.sleep(2.5)
-        step2_placeholder.success('**2. AI 모델 학습**\n\n*상태: ✅ 완료*')
 
-        step3_placeholder.info('**3. 이상 패턴 탐색**\n\n*상태: ⚙️ 진행 중...*')
+        tree_text = tree_text.replace("⚙️ 2. AI 모델 학습 및 패턴 분석...", "✅ 2. AI 모델 학습 및 패턴 분석")
+        tree_text += "      └─ ⚙️ 3. 이상 패턴 탐색...\n"
+        tree_placeholder.markdown(tree_text + "```")
         results, fig, total_claims, total_anomalies = run_analysis(df_main, disease_file, drug_file)
         time.sleep(2)
-        step3_placeholder.success('**3. 이상 패턴 탐색**\n\n*상태: ✅ 완료*')
 
-        step4_placeholder.info('**4. 최종 보고서 생성**\n\n*상태: ⚙️ 진행 중...*')
+        tree_text = tree_text.replace("⚙️ 3. 이상 패턴 탐색...", "✅ 3. 이상 패턴 탐색")
+        tree_text += "         └─ ⚙️ 4. 최종 보고서 생성...\n"
+        tree_placeholder.markdown(tree_text + "```")
         time.sleep(1.5)
-        step4_placeholder.success('**4. 최종 보고서 생성**\n\n*상태: ✅ 완료*')
+
+        tree_text = tree_text.replace("⚙️ 4. 최종 보고서 생성...", "✅ 4. 최종 보고서 생성")
+        tree_placeholder.markdown(tree_text + "```")
         
         st.success("🎉 모든 분석 과정이 성공적으로 완료되었습니다!")
         st.markdown("---")
 
         # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        #           "AI 최종 분석 브리핑" (굵고 큰 글씨 적용)
+        #           "AI 최종 분석 브리핑" (색상 강조 적용)
         # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         st.header("🔬 AI 최종 분석 브리핑")
         
@@ -113,11 +99,11 @@ if start_button:
         if patient_ids:
             most_common_patient = pd.Series(patient_ids).mode()[0]
             count = patient_ids.count(most_common_patient)
-            key_finding = f"가장 주목할 만한 패턴은 특정 환자에게서 이상치가 집중적으로 발견된 점입니다. 특히 **환자번호 `{most_common_patient}`**는 Top 20 리스트에 <span class='big-font'>{count}회</span> 등장하여, 해당 환자의 진료 이력에 대한 심층 검토가 필요합니다."
+            key_finding = f"가장 주목할 만한 패턴은 특정 환자에게서 이상치가 집중적으로 발견된 점입니다. 특히 **환자번호 `{most_common_patient}`**는 Top 20 리스트에 <span style='color: #00f4d4;'>**{count}회**</span> 등장하여, 해당 환자의 진료 이력에 대한 심층 검토가 필요합니다."
         else:
             key_finding = "탐지된 이상치 중에서 특별히 집중되는 패턴은 발견되지 않았습니다."
 
-        summary_text = f"> **분석 요약:** 총 <span class='big-font'>{total_claims:,}</span>건의 진료 데이터에서 <span class='big-font'>{total_anomalies:,}</span>건의 통계적 이상 패턴을 식별했습니다."
+        summary_text = f"> **분석 요약:** 총 <span style='color: #00f4d4;'>**{total_claims:,}**</span>건의 진료 데이터에서 <span style='color: #00f4d4;'>**{total_anomalies:,}**</span>건의 통계적 이상 패턴을 식별했습니다."
         finding_text = f"> **핵심 발견:** {key_finding}"
         recommendation_text = f"> **권장 조치:** 이상치로 탐지된 진료 건들의 상세 분석을 통해, 이례적인 처방/진단 조합의 의학적 타당성을 확인하십시오."
         
