@@ -1,6 +1,7 @@
 [theme]
-primaryColor="#00f4d4"
-backgroundColor="#0B0033"
-secondaryBackgroundColor="#00014A"
-textColor="#ffffff"
+# 표준 다크 모드 테마
+primaryColor="#7792E3"
+backgroundColor="#0E1117"
+secondaryBackgroundColor="#262730"
+textColor="#FAFAFA"
 font="sans serif"
