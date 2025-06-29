@@ -1,4 +1,4 @@
-# app.py (타이핑 효과 최종 수정 버전)
+# app.py (HTML 렌더링 오류 최종 수정 버전)
 
 import streamlit as st
 import pandas as pd
@@ -68,7 +68,7 @@ if start_button:
             st.header("AI 분석 프로세스")
             step1, step2, step3, step4 = st.columns(4)
             placeholders = [step1.empty(), step2.empty(), step3.empty(), step4.empty()]
-            steps = ["1. 데이터 로딩", "2. 데이터 학습", "3. 이상치 탐지", "4. 보고서 생성"]
+            steps = ["1. 데이터 로딩", "2. 데이터 학습", "3. 데이터 분석", "4. 이상치 탐지"]
 
             for i, placeholder in enumerate(placeholders):
                 placeholder.info(f'**{steps[i]}**\n\n*상태: ⏳ 대기 중*')
@@ -98,35 +98,34 @@ if start_button:
             st.markdown("---")
 
             # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            #           "AI 최종 분석 브리핑" (st.write_stream 적용)
+            #           "AI 최종 분석 브리핑" (HTML 렌더링 최종 수정)
             # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             st.header("🔬 AI 최종 분석 브리핑")
 
-            # 타이핑 효과를 위한 '생성기(Generator)' 함수
-            def briefing_generator():
-                # 1. 분석 요약 보고
-                yield "> **분석 요약:** 총 "
-                yield f"<span style='color: #00f4d4;'>**{total_claims:,}**</span>건의 진료 기록을 분석하여, "
-                yield f"<span style='color: #00f4d4;'>**{total_anomalies:,}**</span>건의 통계적 이상 패턴을 식별했습니다. \n\n"
-                time.sleep(1)
+            with st.chat_message("ai", avatar="🤖"):
+                report_placeholder = st.empty()
                 
-                # 2. 핵심 발견 보고
                 patient_ids = [res['patient_id'] for res in results]
                 if patient_ids:
                     most_common_patient = pd.Series(patient_ids).mode()[0]
                     count = patient_ids.count(most_common_patient)
                     key_finding = f"가장 주목할 만한 패턴은 특정 환자에게서 이상치가 집중적으로 발견된 점입니다. 특히 **환자번호 `{most_common_patient}`**는 Top 20 리스트에 <span style='color: #00f4d4;'>**{count}회**</span> 등장하여, 해당 환자의 진료 이력에 대한 심층 검토가 필요해 보입니다. \n\n"
-                    yield f"> **핵심 발견:** {key_finding}"
                 else:
-                    yield "> **핵심 발견:** 탐지된 이상치 중에서 특별히 집중되는 패턴은 발견되지 않았습니다. \n\n"
-                time.sleep(1.5)
+                    key_finding = "탐지된 이상치 중에서 특별히 집중되는 패턴은 발견되지 않았습니다. \n\n"
+                
+                summary_text = f"> **분석 요약:** 총 <span style='color: #00f4d4;'>**{total_claims:,}**</span>건의 진료 기록을 분석하여, <span style='color: #00f4d4;'>**{total_anomalies:,}**</span>건의 통계적 이상 패턴을 식별했습니다. \n\n"
+                recommendation_text = "> **권장 조치:** 이제부터 각 이상 건의 상세 분석을 통해, 이례적인 처방/진단 조합의 의학적 타당성을 확인하시는 것을 권장합니다."
+                
+                full_briefing_text = f"안녕하세요. 요청하신 진료 데이터에 대한 심층 분석을 완료했습니다. \n\n{summary_text}{key_finding}{recommendation_text}"
 
-                # 3. 권장 조치 보고
-                yield "> **권장 조치:** 이제부터 각 이상 건의 상세 분석을 통해, 이례적인 처방/진단 조합의 의학적 타당성을 확인하시는 것을 권장합니다."
-
-            # AI 아이콘과 함께 채팅 메시지 박스 생성 후, 타이핑 효과 적용
-            with st.chat_message("ai", avatar="🤖"):
-                st.write_stream(briefing_generator)
+                full_response = ""
+                for chunk in full_briefing_text:
+                    full_response += chunk
+                    time.sleep(0.02)
+                    # ★★★ HTML 렌더링을 위해 unsafe_allow_html=True를 사용합니다. ★★★
+                    report_placeholder.markdown(full_response + "▌", unsafe_allow_html=True)
+                
+                report_placeholder.markdown(full_response, unsafe_allow_html=True)
             
             st.markdown("---")
             
