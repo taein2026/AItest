@@ -1,17 +1,16 @@
-# analysis.py
+# analysis.py (수정 버전)
 
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.decomposition import PCA
 import plotly.express as px
 
-def run_analysis(main_file, disease_file, drug_file):
+def run_analysis(df_main, disease_file, drug_file):
     """
-    3개의 파일을 입력받아 이상치 분석을 수행하고,
-    결과 데이터프레임과 그래프를 반환하는 함수.
+    미리 읽어둔 메인 DataFrame과 나머지 파일들을 입력받아 분석을 수행하는 함수.
     """
-    # 2단계: 데이터 파일 불러오기
-    df = pd.read_csv(main_file, encoding='cp949', low_memory=False)
+    # 2단계: 데이터 파일 불러오기 (메인 파일은 이미 읽었으므로 생략)
+    df = df_main.copy() # 원본을 보존하기 위해 복사본 사용
     df_disease_map = pd.read_excel(disease_file, dtype={'상병코드': str})
     df_drug_map = pd.read_excel(drug_file, dtype={'연합회코드': str})
 
@@ -48,7 +47,7 @@ def run_analysis(main_file, disease_file, drug_file):
         rank = len(top_20_anomalies) - top_20_anomalies.index.get_loc(index)
         
         anomaly_to_explain = features.loc[index]
-        actual_treatments = anomaly_to_explain[anomaly_to_explain == 1]
+        actual_treatments = anomaly_to_explain[anomaly_to_explain > 0]
         
         reason_df = pd.DataFrame({
             '코드': actual_treatments.index,
@@ -73,4 +72,4 @@ def run_analysis(main_file, disease_file, drug_file):
                      color_discrete_map={'1': 'blue', '-1': 'red'},
                      opacity=0.7)
     
-    return results, fig
+    return results, fig, len(df)
