@@ -42,7 +42,7 @@ if start_button:
         # 스피너와 함께 분석 시작
         with st.spinner('AI가 수만 건의 데이터를 분석하고 있습니다... (약 1~2분 소요)'):
             # 파일을 DataFrame으로 직접 읽어 총 건수 계산
-            df_main_for_count = pd.read_csv(main_file, usecols=[0])
+            df_main_for_count = pd.read_csv(main_file, usecols=[0], encoding='cp949')
             total_claims = len(df_main_for_count)
             
             # 메인 분석 함수 실행
