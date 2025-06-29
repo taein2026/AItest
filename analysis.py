@@ -72,4 +72,7 @@ def run_analysis(df_main, disease_file, drug_file):
                      color_discrete_map={'1': 'blue', '-1': 'red'},
                      opacity=0.7)
     
-    return results, fig, len(df)
+      # ★★★ 전체 이상치 개수(total_anomalies_count)를 추가로 반환합니다. ★★★
+    total_anomalies_count = len(anomalies)
+    
+    return results, fig, len(df), total_anomalies_count
