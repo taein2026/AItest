@@ -1,4 +1,4 @@
-# app.py (최종 디자인 개선 버전)
+# app.py (애니메이션 로딩 오류 최종 수정 버전)
 
 import streamlit as st
 import pandas as pd
@@ -17,17 +17,23 @@ st.set_page_config(
 
 # --- Lottie 애니메이션 로드 함수 ---
 def load_lottieurl(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
+    try:
+        r = requests.get(url)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except requests.exceptions.RequestException:
         return None
-    return r.json()
 
 # --- 사이드바 ---
 with st.sidebar:
     # Lottie 애니메이션 표시
     lottie_url = "https://lottie.host/e883236e-1335-4309-a185-11a518012e69/Tpde6s5V1C.json"
     lottie_json = load_lottieurl(lottie_url)
-    st_lottie(lottie_json, speed=1, height=150, key="initial")
+    
+    # ★★★ 애니메이션 로딩에 성공했을 때만 표시하도록 수정 ★★★
+    if lottie_json:
+        st_lottie(lottie_json, speed=1, height=150, key="initial")
 
     st.title("📄 파일 업로드")
     st.info("분석에 필요한 파일 3개를 모두 업로드해주세요.")
@@ -47,7 +53,6 @@ st.markdown("---")
 if not start_button:
     st.info("⬅️ 왼쪽 사이드바에서 분석할 파일 3개를 모두 업로드한 후, '분석 시작하기' 버튼을 눌러주세요.")
     st.image("https://storage.googleapis.com/gweb-cloud-ai-generative-ai-proserve-media/images/dashboard_professional.png", use_column_width=True)
-
 
 # 분석 시작
 if start_button:
