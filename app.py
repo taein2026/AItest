@@ -1,4 +1,4 @@
-# app.py (HTML 렌더링 오류 최종 수정 버전)
+# app.py (최종 완성 버전)
 
 import streamlit as st
 import pandas as pd
@@ -42,6 +42,7 @@ with st.sidebar:
     if uploaded_main_file and uploaded_disease_file and uploaded_drug_file:
         if st.button("✔️ 업로드 파일 저장", use_container_width=True):
             with st.spinner("파일을 읽고 있습니다..."):
+                # 파일 보관함(Session State)에 데이터 저장
                 st.session_state['df_main'] = pd.read_csv(uploaded_main_file, encoding='cp949', low_memory=False)
                 st.session_state['df_disease'] = pd.read_excel(uploaded_disease_file, dtype={'상병코드': str})
                 st.session_state['df_drug'] = pd.read_excel(uploaded_drug_file, dtype={'연합회코드': str})
@@ -97,9 +98,7 @@ if start_button:
             st.success("🎉 모든 분석 과정이 성공적으로 완료되었습니다!")
             st.markdown("---")
 
-            # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            #           "AI 최종 분석 브리핑" (HTML 렌더링 최종 수정)
-            # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            # --- AI 최종 분석 브리핑 (타이핑 효과 적용) ---
             st.header("🔬 AI 최종 분석 브리핑")
 
             with st.chat_message("ai", avatar="🤖"):
@@ -122,7 +121,6 @@ if start_button:
                 for chunk in full_briefing_text:
                     full_response += chunk
                     time.sleep(0.02)
-                    # ★★★ HTML 렌더링을 위해 unsafe_allow_html=True를 사용합니다. ★★★
                     report_placeholder.markdown(full_response + "▌", unsafe_allow_html=True)
                 
                 report_placeholder.markdown(full_response, unsafe_allow_html=True)
@@ -131,8 +129,25 @@ if start_button:
             
             # --- 분석 결과 상세 대시보드 ---
             st.header("분석 결과 상세 대시보드")
-            # ... (이하 대시보드 출력 코드는 이전과 동일)
-
+            col1, col2, col3 = st.columns(3)
+            col1.metric("총 진료 건수", f"{total_claims:,} 건")
+            col2.metric("탐지된 이상치", f"{total_anomalies:,} 건", f"상위 {(total_anomalies/total_claims):.2%}")
+            col3.metric("분석된 특성(항목) 수", "500 개")
+            
+            tab1, tab2 = st.tabs(["📊 **이상치 요약 및 그래프**", "📑 **Top 20 상세 분석**"])
+            with tab1:
+                st.subheader("이상치 분포 시각화")
+                st.info("파란색 점들은 일반적인 진료 패턴을, 빨간색 점들은 AI가 통계적으로 특이하다고 판단한 이상치를 나타냅니다.")
+                st.plotly_chart(fig, use_container_width=True)
+            with tab2:
+                st.subheader("가장 의심스러운 진료 Top 20")
+                st.info("Rank가 높을수록 패턴이 이질적이라는 의미입니다. 각 항목을 클릭하여 상세 원인을 확인하세요.")
+                for res in reversed(results):
+                    expander_title = f"**Rank {res['rank']}** | 환자번호: `{res['patient_id']}` | 진료일: `{res['date']}`"
+                    with st.expander(expander_title):
+                        st.write("▶ **이 진료가 이상치로 판단된 핵심 이유 (가장 희귀한 조합 Top 5):**")
+                        st.dataframe(res['reasons'], use_container_width=True) 
+                        
         except Exception as e:
             st.error(f"분석 중 오류가 발생했습니다: {e}")
             st.exception(e)
