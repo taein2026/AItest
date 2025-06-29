@@ -60,7 +60,6 @@ if start_button:
         with st.status("분석 엔진을 준비 중입니다...", expanded=True) as status:
             time.sleep(1)
             status.update(label="[1/6] 진료 데이터 로딩...")
-            # --- 파일을 먼저 DataFrame으로 변환하여 오류 원천 차단 ---
             df_main = pd.read_csv(uploaded_main_file, encoding='cp949', low_memory=False)
             df_disease = pd.read_excel(uploaded_disease_file, dtype={'상병코드': str})
             df_drug = pd.read_excel(uploaded_drug_file, dtype={'연합회코드': str})
@@ -72,7 +71,6 @@ if start_button:
             time.sleep(2)
             status.update(label="[4/6] 패턴 분석 및 이상치 탐지...")
             
-            # --- 변환된 DataFrame을 분석 함수에 전달 ---
             results, fig, total_claims, total_anomalies = run_analysis(df_main, df_disease, df_drug)
             
             time.sleep(1.5)
@@ -85,8 +83,20 @@ if start_button:
         st.success("🎉 모든 분석 과정이 성공적으로 완료되었습니다!")
         st.markdown("---")
         
-        # --- AI 최종 분석 브리핑 및 대시보드 출력 ---
+        # --- AI 최종 분석 브리핑 (타이핑 효과 적용) ---
         st.header("🔬 AI 최종 분석 브리핑")
+        
+        # 타이핑 효과를 위한 함수
+        def stream_text(text_to_stream):
+            placeholder = st.empty()
+            full_response = ""
+            for chunk in text_to_stream:
+                full_response += chunk
+                time.sleep(0.015)  # 타이핑 속도 조절
+                placeholder.markdown(full_response + "▌")
+            placeholder.markdown(full_response)
+
+        # 브리핑 내용 준비
         patient_ids = [res['patient_id'] for res in results]
         if patient_ids:
             most_common_patient = pd.Series(patient_ids).mode()[0]
@@ -94,16 +104,24 @@ if start_button:
             key_finding = f"가장 주목할 만한 패턴은 특정 환자에게서 이상치가 집중적으로 발견된 점입니다. 특히 **환자번호 `{most_common_patient}`**는 Top 20 리스트에 **{count}회** 등장하여, 해당 환자의 진료 이력에 대한 심층 검토가 필요합니다."
         else:
             key_finding = "탐지된 이상치 중에서 특별히 집중되는 패턴은 발견되지 않았습니다."
-        summary_text = f"> **분석 요약:** 총 **{total_claims:,}**건의 진료 데이터에서 **{total_anomalies:,}**건의 통계적 이상 패턴을 식별했습니다."
-        st.markdown(summary_text)
-        st.markdown(f"> **핵심 발견:** {key_finding}")
-        st.markdown("> **권장 조치:** 이상치로 탐지된 진료 건들의 상세 분석을 통해, 이례적인 처방/진단 조합의 의학적 타당성을 확인하십시오.")
+        
+        summary_text = f"> **분석 요약:** 총 **{total_claims:,}**건의 진료 기록을 분석하여, **{total_anomalies:,}**건의 통계적 이상 패턴을 식별했습니다."
+        finding_text = f"> **핵심 발견:** {key_finding}"
+        recommendation_text = f"> **권장 조치:** 이상치로 탐지된 진료 건들의 상세 분석을 통해, 이례적인 처방/진단 조합의 의학적 타당성을 확인하십시오."
+        
+        full_briefing_text = f"{summary_text}\n\n{finding_text}\n\n{recommendation_text}"
+        
+        stream_text(full_briefing_text)
+        
         st.markdown("---")
+        
+        # --- 분석 결과 상세 대시보드 ---
         st.header("분석 결과 상세 대시보드")
         col1, col2, col3 = st.columns(3)
         col1.metric("총 진료 건수", f"{total_claims:,} 건")
         col2.metric("탐지된 이상치", f"{total_anomalies:,} 건", f"상위 {(total_anomalies/total_claims):.2%}")
         col3.metric("분석된 특성(항목) 수", "500 개")
+        
         tab1, tab2 = st.tabs(["📊 **이상치 요약 및 그래프**", "📑 **Top 20 상세 분석**"])
         with tab1:
             st.subheader("이상치 분포 시각화")
