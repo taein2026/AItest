@@ -52,7 +52,7 @@ with st.sidebar:
     start_button = st.button("🚀 AI 분석 실행", type="primary", use_container_width=True, disabled='files_ready' not in st.session_state)
 
 # --- 메인 화면 ---
-st.title("✨ AI 이상 진료 탐지 시스템 v4.0")
+st.title("✨ MediCopilot AI ")
 st.markdown("---")
 
 # 초기 화면
