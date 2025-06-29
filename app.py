@@ -1,4 +1,4 @@
-# app.py (오류 수정 및 디자인 복구 최종 버전)
+# app.py (최종 완성 버전)
 
 import streamlit as st
 import pandas as pd
@@ -54,41 +54,38 @@ if not start_button:
 # 분석 시작
 if start_button:
     try:
-        # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        #           "AI 분석 프로세스" 시각화 (선호하시는 버전으로 복구)
-        # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        # --- "AI 분석 프로세스" 시각화 ---
         st.header("AI 분석 프로세스")
         
-        with st.spinner("분석 엔진을 준비 중입니다..."):
-            # ★★★ 파일을 먼저 DataFrame으로 변환하여 오류 원천 차단 ★★★
+        with st.status("분석 엔진을 준비 중입니다...", expanded=True) as status:
+            time.sleep(1)
+            status.update(label="[1/6] 진료 데이터 로딩...")
+            # --- 파일을 먼저 DataFrame으로 변환하여 오류 원천 차단 ---
             df_main = pd.read_csv(uploaded_main_file, encoding='cp949', low_memory=False)
             df_disease = pd.read_excel(uploaded_disease_file, dtype={'상병코드': str})
             df_drug = pd.read_excel(uploaded_drug_file, dtype={'연합회코드': str})
-
-        with st.status("AI가 분석을 시작합니다...", expanded=True) as status:
-            time.sleep(1)
-            status.update(label="[1/6] 진료 데이터 로딩...")
+            
             time.sleep(1)
             status.update(label="[2/6] 진료 데이터 전처리...")
             time.sleep(1.5)
-            status.update(label="[3/6] 진료 데이터 학습...")
+            status.update(label="[3/6] AI 모델 학습...")
             time.sleep(2)
-            status.update(label="[4/6] 진료 데이터 분석...")
-            time.sleep(1.5)
-            status.update(label="[5/6] 진료 데이터 이상치 탐지...")
-
-            # ★★★ 변환된 DataFrame을 분석 함수에 전달 ★★★
+            status.update(label="[4/6] 패턴 분석 및 이상치 탐지...")
+            
+            # --- 변환된 DataFrame을 분석 함수에 전달 ---
             results, fig, total_claims, total_anomalies = run_analysis(df_main, df_disease, df_drug)
             
+            time.sleep(1.5)
+            status.update(label="[5/6] 분석 결과 해석...")
             time.sleep(1)
-            status.update(label="[6/6] 진료 데이터 보고서 작성...")
+            status.update(label="[6/6] 최종 보고서 생성...")
             time.sleep(2)
             status.update(label="분석 완료!", state="complete", expanded=False)
         
         st.success("🎉 모든 분석 과정이 성공적으로 완료되었습니다!")
         st.markdown("---")
         
-        # --- AI 최종 분석 브리핑 및 대시보드 출력 (이전과 동일) ---
+        # --- AI 최종 분석 브리핑 및 대시보드 출력 ---
         st.header("🔬 AI 최종 분석 브리핑")
         patient_ids = [res['patient_id'] for res in results]
         if patient_ids:
