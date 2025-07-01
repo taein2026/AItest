@@ -1,6 +1,8 @@
+streamlit
 pandas
+requests
+streamlit-lottie
+google-generativeai
 scikit-learn
 plotly
 openpyxl
-streamlit
-streamlit-lottie
