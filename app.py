@@ -1,4 +1,4 @@
-# app.py (진정한 AI 분석 최종 버전)
+# app.py (진정한 전문가 조력자 최종 버전)
 
 import streamlit as st
 import pandas as pd
@@ -10,7 +10,7 @@ import google.generativeai as genai
 
 # --- 페이지 기본 설정 ---
 st.set_page_config(
-    page_title="AI Anomaly Detection System v15.0",
+    page_title="AI Anomaly Detection System v16.0",
     page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -109,35 +109,43 @@ if start_button:
                 # --- 2. 최종 프롬프트 ---
                 prompt = f"""
                 **CRITICAL DIRECTIVE:**
-                Your persona is an **Elite AI Medical Analyst**. You provide decisive, expert opinions to support a senior clinician's final judgment. Your tone is assertive and declarative.
-                1.  **TRUE ANALYSIS:** You MUST independently analyze the `Case File Data`. Extract the most salient drug names, diagnoses, and percentages, and then build your expert opinion around them. Your goal is to generate insight, not fill a template.
-                2.  **NO HALLUCINATION:** Your judgments are based *only* on the statistical patterns provided. Do not invent clinical facts.
-                3.  **SEAMLESS TEXT:** Your entire response must be a single, continuous text. Do not use any boxes, backticks (` `), or code blocks (```). Emphasize with bolding (`**text**`) only.
+                Your persona is an **Elite AI Medical Analyst**. Your primary goal is to empower a senior clinician by providing data-driven insights that highlight *why* their specialized treatment is statistically unique and how to proactively defend it.
+                1.  **ACKNOWLEDGE CLINICAL CONTEXT:** Start by acknowledging that statistically rare patterns often reflect specialized, expert-level clinical care for complex cases (like eating disorders).
+                2.  **CITE THE DATA AS EVIDENCE FOR THE DOCTOR:** You MUST explicitly use the specific names and percentages from the `Case File Data` to quantify *why* this treatment pattern is unique. Frame this data as evidence the doctor can use.
+                3.  **NO HALLUCINATION & NO JUDGMENT:** Do not invent clinical facts or judge the treatment's appropriateness. Your role is to analyze the data and explain its implications from different professional viewpoints.
+                4.  **SEAMLESS & SUBSTANTIAL TEXT:** Your entire response must be a single, continuous text without boxes or code blocks. Each numbered section must be a detailed analysis.
 
                 **Case File Data for Review:**
                 - **Primary Patient of Interest:** Patient ID **{most_common_patient_id}**
-                - **Key Evidence for Patient **{most_common_patient_id}** (This is the core evidence you must analyze and interpret):**
+                - **Key Evidence for Patient **{most_common_patient_id}** (This is the core evidence for your analysis):**
                 ```markdown
                 {patient_specific_reasons_str}
                 ```
 
-                **Mandatory Briefing Framework (For each section, adopt the persona and render a decisive, detailed judgment based on your independent analysis of the Key Evidence):**
+                **Mandatory Briefing Framework (Adopt the persona and render a decisive, detailed analysis):**
 
                 ---
 
-                ### **🔬 MediCopilot AI: 전문가 위원회 최종 판단**
+                ### **🔬 MediCopilot AI: 전문가 분석 및 소명 자료 지원**
 
-                #### **1. 임상의학 전문가 (정신과) 최종 소견**
-                **판단:** 환자 **{most_common_patient_id}**의 사례는 임상적 관점에서 심각한 주의를 요하는 케이스로 판단됩니다. Key Evidence를 분석한 결과, 가장 주목할 점은 통계적으로 매우 이례적인 약물 조합이 사용되었다는 것입니다. 예를 들어, 항정신병 계열 약물과 식욕억제제의 병용 처방은 표준 임상 프로토콜에서 극히 드물게 나타나는 조합입니다. 이러한 처방은 약물 간 상호작용(Drug-Drug Interaction)으로 인한 예상치 못한 부작용의 위험을 크게 높일 수 있으며, 각 약물의 대사 과정에 영향을 주어 치료 효과를 저해하거나 독성을 증폭시킬 수 있습니다. 이는 해당 처방이 일반적인 진료의 범주를 벗어난 통계적 특이성을 보이므로, **표준 진료 프로토콜과의 차이점을 스스로 재점검하고 그 의학적 근거를 명확히 할 필요가 있음을 강력하게 시사**합니다.
+                #### **분석 요약: 고도로 전문화된 진료 패턴 식별**
+                총 **{total_claims:,}**건의 진료 기록 분석 결과, 통계적으로 매우 유니크한 전문 진료 패턴 **{total_anomalies:,}**건을 식별했습니다. 특히 환자 ID **{most_common_patient_id}**의 사례는, 복합적인 상태의 환자에 대한 깊이 있는 임상적 판단이 반영된 **고도로 전문화된, 비정형적 진료 패턴(Highly-specialized, Atypical Treatment Pattern)**으로 분석됩니다. 아래는 이 진료의 통계적 특성과 잠재적 쟁점에 대한 전문가별 분석 의견입니다.
 
-                #### **2. 보건복지부 행정 심사관 최종 결정**
-                **결정:** Key Evidence에서 확인된 처방 조합은 통계적 희귀성으로 인해 **건강보험심사평가원의 심사 조정(삭감) 대상이 될 확률이 매우 높습니다.** Key Evidence에 따르면, 특정 처방의 '평균 사용률'은 1% 미만으로 나타나는 등, 개별 항목만으로도 심사관의 주의를 끌기에 충분합니다. 하물며 이러한 희귀 처방들이 복합적으로 청구된 것은, 명확한 소명 자료가 없다면 '과잉 진료' 또는 '착오 청구'로 해석될 여지가 매우 큽니다. **결정적으로, 이 청구 건은 '요주의 사례'로 분류하고, 처방의 타당성을 입증하는 상세한 소명 자료 제출을 즉시 요구해야 합니다.** 자료가 미비할 경우, 관련 진료비 전액 삭감까지도 고려될 수 있습니다.
+                ---
 
-                #### **3. 데이터 통계 전문가 최종 분석**
-                **분석:** 통계적으로, 이 패턴은 우연으로 보기 어려운 **극단적인 이상치(Extreme Outlier)**입니다. 핵심은 개별 항목의 희귀성이 아니라, **이러한 희귀한 사건들이 동시에 발생했다는 '조합'의 희귀성**에 있습니다. Key Evidence를 보면, 사용률이 1% 미만인 항목들이 다수 포함되어 있습니다. 예를 들어, 발생 확률이 각각 0.24%와 0.87%인 두 사건이 독립적으로 동시에 일어날 확률은 산술적으로 0.002% (10만 번 중 2번)에 불과합니다. 이처럼 강력한 통계적 증거는 이 패턴이 결코 일반적인 진료 행위가 아님을 명백히 보여주며, **임상적 특이성 또는 데이터 입력 오류라는 두 가지 가설에 대한 심층 검증이 반드시 필요함**을 나타냅니다.
+                #### **분야별 전문가 검토 의견**
 
-                #### **4. 종합 결론: 임상적 특이성 vs. 데이터 입력 오류**
-                **판단:** 위 전문가 의견들을 종합할 때, 이 극단적인 통계적 이상치는 두 가지 가능성을 시사합니다. 첫째는 환자의 매우 희귀한 임상적 특이성으로 인한 필연적 처방일 가능성입니다. 둘째는, 그리고 통계적으로 더 빈번하게 발생하는, **행정 착오, 즉 '데이터 입력 오류'일 가능성**입니다. 처방전이나 의무기록의 내용을 청구 시스템에 옮기는 과정에서 실수가 발생했을 확률은 언제나 존재합니다. 따라서, **가장 먼저 확인해야 할 사항은 의사의 실제 처방과 청구 데이터가 100% 일치하는지 여부를 검증하는 것**입니다. 이것이 의사의 진료 판단에 대한 문제를 논하기 전, 가장 객관적이고 합리적인 첫 단계입니다.
+                ##### **1. 임상의학 관점: 전문성의 데이터 기반 증명**
+                **의견:** 환자 **{most_common_patient_id}**의 사례는 식이장애와 같이 복합적인 증상을 가진 환자에 대한 깊은 이해를 바탕으로 한 처방으로 보입니다. Key Evidence에 따르면, **(여기서 Case File Data 테이블의 '특성명 (한글)' 컬럼에서 주요 항목 2-3개를 직접 언급하세요)** 등이 동시에 처방되었습니다. 이러한 약물 조합은 일반적인 단일 질환 처방에서는 나타나지 않는, 통계적으로 매우 이례적인 패턴입니다. 이는 역설적으로, 해당 환자의 복합적인 상태(예: 폭식, 과민성, 부종 등)를 동시에 제어하려는 의사의 **고도의 임상적 판단이 데이터로 나타난 결과**라고 해석할 수 있습니다. 다만, 이 처방의 유니크함은 그 근거를 명확히 문서화해 둘 필요가 있음을 시사합니다.
+
+                ##### **2. 보건 행정 및 심사 관점: 선제적 방어 논리 제공**
+                **의견:** 심사관은 일차적으로 통계 데이터에 기반하여 심사를 진행하므로, 이 사례의 **통계적 희귀성은 심사 조정의 빌미가 될 수 있습니다.** Key Evidence에 따르면, **(여기서 Case File Data 테이블에서 사용률이 가장 낮은 항목의 이름과 '평균 사용률 (%)'을 정확히 인용하세요)**와 같은 처방은 그 자체만으로도 소명 요청을 받을 가능성이 높습니다. 따라서, "본 환자는 복합적 식이장애 환자로, **'A약물'(사용률 X.XX%)**은 병적 식욕 제어를 위해, **'B처치'(사용률 Y.YY%)**는 심리 상태 안정을 위해 필수적이었다" 와 같이, **각 처방의 명확한 의학적 근거와 당위성을 선제적으로 준비**해두는 것이 잠재적 삭감을 방어하는 가장 효과적인 전략입니다.
+
+                ##### **3. 데이터 분석 관점: '조합'의 희귀성 증명**
+                **분석:** 이 패턴이 '이상치'로 탐지된 이유는, 개별 항목의 희귀성이 아니라 **이러한 희귀한 사건들이 '동시에 발생'했다는 조합의 확률** 때문입니다. Key Evidence에 따르면, **(여기서 Case File Data 테이블의 항목과 '평균 사용률 (%)'을 2개 인용하세요. 예: "'A약물'은 100명의 환자 중 0.15명에게만, 'B진단'은 0.50명에게만 나타납니다.")** 이처럼 각각의 발생 확률이 1%도 채 되지 않는 사건들이 한 개인에게 동시에 발생할 확률은 산술적으로 거의 0에 가깝습니다. 이 데이터는 해당 진료가 **결코 일반적인 사례가 아니며, 특별한 의학적 배경 없이는 설명하기 어려운 패턴**임을 객관적인 수치로 강력하게 뒷받침합니다.
+
+                #### **4. 종합 결론: '임상적 타당성'과 '행정적 오류 가능성'에 대한 최종 판단**
+                **판단:** 모든 데이터를 종합했을 때, 이 사례는 **'의사의 오진이나 처방 실수'라기보다는 '고도로 전문화된 진료에 대한 데이터 입력 또는 청구 과정의 오류'일 가능성**에 무게가 실립니다. 즉, 의사의 임상적 판단은 타당했을 가능성이 높지만, 그 복잡한 처방 내용이 행정 시스템에 정확히 반영되지 않았거나, 시스템이 이 특수성을 이해하지 못했을 수 있습니다. 따라서, 가장 시급하고 중요한 첫 단계는 **실제 의무기록과 청구 데이터가 정확히 일치하는지를 검증하여, 행정적 오류 가능성을 먼저 배제하는 것**입니다. 이 검증이 완료된 후에야, 해당 처방의 임상적 타당성에 대한 논의가 의미를 가질 것입니다.
 
                 ---
                 **면책 조항:** 본 AI의 판단은 제공된 통계 데이터에 기반한 추론이며, 최종적인 의료적/법적 책임은 해당 분야의 인간 전문가에게 있습니다.
