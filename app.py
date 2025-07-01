@@ -1,4 +1,4 @@
-# app.py (동적 데이터 분석 최종 버전)
+# app.py (최종 전문가 판단 버전)
 
 import streamlit as st
 import pandas as pd
@@ -10,7 +10,7 @@ import google.generativeai as genai
 
 # --- 페이지 기본 설정 ---
 st.set_page_config(
-    page_title="AI Anomaly Detection System v11.0",
+    page_title="AI Anomaly Detection System v12.0",
     page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -109,52 +109,38 @@ if start_button:
                 # --- 2. 최종 프롬프트 ---
                 prompt = f"""
                 **CRITICAL DIRECTIVE:**
-                Your persona is an **Elite AI Medical Analyst**. Your tone is direct, professional, and provides actionable intelligence.
-                1.  **DYNAMIC ANALYSIS:** You MUST dynamically extract and cite specific item names and percentages from the `Input Data` table in your analysis. Do not use generic examples; use the real data provided for this specific patient.
-                2.  **NO HALLUCINATION:** Base ALL statements *strictly* on the `Input Data`. Your role is to state what the data shows and what requires human review. Do not invent clinical facts.
-                3.  **NO BOXES OR WEAK LANGUAGE:** Use bolding (`**text**`) for emphasis. State your findings as direct, professional conclusions.
+                Your persona is an **Elite AI Medical Analyst**. You provide decisive, expert opinions to support a senior clinician's final judgment. Your tone is assertive and declarative.
+                1.  **CITE THE DATA:** You MUST explicitly use the specific names and numbers from the `Input Data` to support every judgment.
+                2.  **NO HALLUCINATION:** Your judgments are based *only* on the statistical patterns provided. Do not invent clinical facts.
+                3.  **NO BOXES:** Use bolding (`**text**`) for emphasis.
 
                 **Input Data:**
-                - **Total Claims Analyzed:** {total_claims:,}
-                - **Anomalous Patterns Detected:** {total_anomalies:,}
                 - **Primary Patient of Interest:** Patient ID **{most_common_patient_id}**
-                - **Data for Patient **{most_common_patient_id}** (This is the core evidence you must analyze):**
+                - **Data for Patient **{most_common_patient_id}** (This is the core evidence for your judgment):**
                 ```markdown
                 {patient_specific_reasons_str}
                 ```
 
-                **Mandatory Briefing Framework (Follow this structure precisely):**
+                **Mandatory Briefing Framework (For each section, adopt the persona and render a decisive judgment):**
 
                 ---
 
-                ### **🔬 MediCopilot AI: 심층 분석 및 실행 권고 보고서**
+                ### **🔬 MediCopilot AI: 전문가 위원회 최종 판단**
 
-                #### **분석 요약: 즉각적인 검토가 필요한 사례 발견**
-                총 **{total_claims:,}**건의 진료 기록 분석 결과, 통계적으로 매우 이례적인 패턴 **{total_anomalies:,}**건을 식별했습니다. 특히 환자 ID **{most_common_patient_id}**의 사례는 명백한 통계적 특이점을 보여, 즉각적인 다각도 검토가 필요합니다.
+                #### **1. 임상의학 전문가 (정신과) 최종 소견**
+                **판단:** `Input Data`에 따르면, 환자 **{most_common_patient_id}**에게 **(여기서 Input Data 테이블의 '특성명 (한글)' 컬럼에서 가장 이례적인 약물명 2-3개를 직접 언급하세요)** 등이 동시에 처방되었습니다. 이 조합은 표준 임상 프로토콜에서 심각하게 벗어난 것으로 보입니다. 특히 항정신병제와 식욕억제제의 병용은 약물 상호작용 및 부작용 위험을 크게 높일 수 있어, **의학적 타당성을 입증할 명백한 근거가 없다면 부적절한 처방으로 판단**됩니다. 해당 환자의 특수한 상태를 고려했다 하더라도, 이는 동료 전문가의 검토(Peer Review)가 반드시 선행되어야 할 매우 이례적인 사례입니다.
 
-                ---
+                #### **2. 보건복지부 행정 심사관 최종 결정**
+                **결정:** `Input Data`에서 확인된 처방 조합은 통계적 희귀성으로 인해 **건강보험심사평가원의 심사 조정(삭감) 대상이 될 확률이 매우 높습니다.** 예를 들어, **(여기서 Input Data 테이블에서 사용률이 가장 낮은 항목의 이름과 '평균 사용률 (%)'을 정확히 인용하세요)**와 같은 처방은 그 자체만으로도 정밀 심사 대상입니다. **결정적으로, 이 청구 건은 '요주의 사례'로 분류하고, 처방의 타당성을 입증하는 상세한 소명 자료 제출을 즉시 요구해야 합니다.** 자료가 미비할 경우, 관련 진료비 전액 삭감까지도 고려될 수 있습니다.
 
-                #### **분야별 전문가 검토 의견**
+                #### **3. 데이터 통계 전문가 최종 분석**
+                **분석:** 통계적으로, 이 패턴은 우연으로 보기 어려운 **극단적인 이상치(Extreme Outlier)**입니다. 예를 들어, `Input Data`의 **(여기서 Input Data 테이블의 항목과 '평균 사용률 (%)'을 2개 인용하세요. 예: "'A약물'은 100명의 환자 중 0.15명에게만, 'B진단'은 0.50명에게만 나타납니다.")** 이처럼 각각의 발생 확률이 1%도 채 되지 않는 사건들이 한 개인에게 동시에 발생할 확률은 거의 0에 가깝습니다. 이 강력한 통계적 증거는 이 패턴이 결코 일반적인 진료 행위가 아님을 명백히 보여줍니다.
 
-                ##### **1. 임상의학 관점 (Clinical Peer-Review Perspective)**
-                **의견:** `Input Data`의 상세 보고서에 따르면, 환자 **{most_common_patient_id}**에게는 **(여기서 Input Data 테이블의 '특성명 (한글)' 컬럼에서 주요 항목 2-3개를 직접 언급하세요)** 등이 동시에 처방 및 진단되었습니다. 이처럼 통계적으로 매우 드문 조합은, 해당 환자의 복합적인 상태를 고려한 깊은 의학적 판단일 수도 있으나, 동시에 약물 상호작용의 위험성 등 의학적 타당성에 대한 **동료 전문가의 심도 있는 검토(Peer Review)가 반드시 필요**한 사례입니다.
-
-                ##### **2. 보건 행정 및 심사 관점 (Audit & Regulatory Perspective)**
-                **의견:** `Input Data`에서 확인된 처방 조합은 통계적 희귀성으로 인해 건강보험심사평가원의 **정밀 심사 또는 삭감 대상으로 지정될 명백한 위험**을 내포하고 있습니다. `Input Data`에 명시된 낮은 '평균 사용률'은 심사 과정에서 주된 검토 사유가 될 것입니다. 따라서 잠재적인 행정적 불이익을 방지하기 위해, 해당 처방의 **필요성을 입증할 수 있는 객관적인 의무기록과 상세한 소견서 등의 준비가 시급**합니다.
-
-                ##### **3. 데이터 분석 관점 (Data Science Perspective)**
-                **의견:** 이 패턴이 '이상치'로 탐지된 이유는 명확합니다. `Input Data`에 따르면, 환자 **{most_common_patient_id}**에게 적용된 처방들은 각각의 '평균 사용률(%)'이 매우 낮습니다. **(여기서 Input Data 테이블의 '특성명 (한글)'과 '평균 사용률 (%)'을 2-3개 직접 인용하여 구체적인 수치를 제시하세요. 예: "'A약물'의 사용률은 0.15%, 'B진단'의 사용률은 0.50%에 불과합니다.")** 통계적으로, 이러한 낮은 확률의 이벤트들이 한 개인에게 동시에 발생할 확률은 극히 희박합니다. 이 강력한 통계적 신호는 다음 두 가지 가능성을 지목합니다.
-                * **가설 1 (임상적 특이성):** 환자가 매우 복합적이고 희귀한 상태에 있어, 불가피하게 이례적인 처방이 이루어졌을 가능성.
-                * **가설 2 (데이터 입력 오류):** 진료비 청구 코드 입력 과정에서 실수가 발생했을 가능성. 통계적으로는 이 가설 또한 충분히 검토할 가치가 있습니다.
+                #### **4. 종합 결론: 임상적 특이성 vs. 데이터 입력 오류**
+                **판단:** 위 전문가 의견들을 종합할 때, 환자의 매우 희귀한 임상적 특이성일 가능성을 완전히 배제할 수는 없습니다. 하지만, 이처럼 극단적인 통계적 희귀성은 **단순한 의학적 판단보다는 행정 착오, 즉 '데이터 입력 오류'일 가능성이 훨씬 높다고 판단됩니다.** 처방전이나 의무기록의 내용을 청구 시스템에 옮기는 과정에서 실수가 발생했을 확률이 가장 유력합니다. **따라서, 가장 시급한 조치는 '데이터의 정확성'을 검증하는 것입니다.**
 
                 ---
-
-                #### **최종 권고: 즉시 실행이 필요한 조치**
-                1.  **사실 관계 확정:** 환자 **{most_common_patient_id}**의 원본 의무기록과 청구 데이터를 대조하여, 데이터 입력 오류 여부를 최우선으로 검증하십시오.
-                2.  **의학적 근거 확보:** 데이터에 오류가 없다면, 해당 처방의 타당성을 입증할 수 있는 상세한 임상적 소견 및 관련 근거 자료를 즉시 확보하고 문서화하십시오.
-                3.  **동료 검토 시행:** 원내 동료 전문가 또는 관련 학회에 본 사례에 대한 자문을 구해, 처방의 적정성에 대한 객관적인 의견을 확보할 것을 권고합니다.
-
-                **본 분석의 한계:** 본 AI 보고서는 통계적 패턴에 기반한 의사결정 지원 도구이며, 최종적인 의학적 판단을 대체할 수 없습니다. 모든 권고 사항의 최종 실행 여부는 해당 분야 전문가의 책임 하에 결정되어야 합니다.
+                **면책 조항:** 본 AI의 판단은 제공된 통계 데이터에 기반한 추론이며, 최종적인 의료적/법적 책임은 해당 분야의 인간 전문가에게 있습니다.
                 """
                 
                 model = genai.GenerativeModel('gemini-1.5-flash')
