@@ -1,4 +1,4 @@
-# app.py (가독성 개선 최종 버전)
+# app.py (신뢰도 및 가독성 개선 최종 버전)
 
 import streamlit as st
 import pandas as pd
@@ -10,7 +10,7 @@ import google.generativeai as genai
 
 # --- 페이지 기본 설정 ---
 st.set_page_config(
-    page_title="AI Anomaly Detection System v5.3",
+    page_title="AI Anomaly Detection System v6.0",
     page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -66,102 +66,99 @@ if start_button:
             # --- AI 분석 프로세스 바 ---
             st.header("AI 분석 프로세스")
             
+            # (진행 바 코드는 이전과 동일)
             step1, step2, step3, step4, step5, step6 = st.columns(6)
             placeholders = [step1.empty(), step2.empty(), step3.empty(), step4.empty(), step5.empty(), step6.empty()]
             steps = ["1. 데이터 로딩", "2. 데이터 전처리", "3. AI 모델 학습", "4. 패턴 분석", "5. 이상치 탐지", "6. 보고서 생성"]
-
             for i, placeholder in enumerate(placeholders):
                 placeholder.info(f'**{steps[i]}**\n\n*상태: ⏳*')
-
-            time.sleep(1)
-            placeholders[0].error(f'**{steps[0]}**\n\n*상태: 🔥 분석 중...*')
+            time.sleep(0.5)
+            placeholders[0].success(f'**{steps[0]}**\n\n*상태: ✅ 완료*')
+            placeholders[1].success(f'**{steps[1]}**\n\n*상태: ✅ 완료*')
+            
+            # --- 실제 분석 수행 ---
             df_main = st.session_state['df_main']
             df_disease = st.session_state['df_disease']
             df_drug = st.session_state['df_drug']
-            time.sleep(1.5)
-            placeholders[0].success(f'**{steps[0]}**\n\n*상태: ✅ 완료*')
-
-            placeholders[1].error(f'**{steps[1]}**\n\n*상태: 🔥 분석 중...*')
-            time.sleep(1.5)
-            placeholders[1].success(f'**{steps[1]}**\n\n*상태: ✅ 완료*')
-
-            placeholders[2].error(f'**{steps[2]}**\n\n*상태: 🔥 분석 중...*')
-            time.sleep(2)
-            placeholders[2].success(f'**{steps[2]}**\n\n*상태: ✅ 완료*')
-            
-            placeholders[3].error(f'**{steps[3]}**\n\n*상태: 🔥 분석 중...*')
             results, fig, total_claims, total_anomalies = run_analysis(df_main, df_disease, df_drug)
+            
+            # (진행 바 마무리)
+            placeholders[2].success(f'**{steps[2]}**\n\n*상태: ✅ 완료*')
             placeholders[3].success(f'**{steps[3]}**\n\n*상태: ✅ 완료*')
-
-            placeholders[4].error(f'**{steps[4]}**\n\n*상태: 🔥 분석 중...*')
-            time.sleep(1.5)
             placeholders[4].success(f'**{steps[4]}**\n\n*상태: ✅ 완료*')
-
-            placeholders[5].error(f'**{steps[5]}**\n\n*상태: 🔥 분석 중...*')
-            time.sleep(1)
+            time.sleep(0.5)
             placeholders[5].success(f'**{steps[5]}**\n\n*상태: ✅ 완료*')
             
             st.success("🎉 모든 분석 과정이 성공적으로 완료되었습니다!")
             st.markdown("---")
             
-            # --- AI 최종 분석 브리핑 (고급 프롬프트 적용 버전) ---
+            # --- AI 최종 분석 브리핑 ---
             st.header("🔬 AI 최종 분석 브리핑")
 
             try:
                 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-                # 1. AI에게 제공할 상세 데이터 가공
+                # --- 1. 데이터 사전 가공 (Python-Side Pre-processing) ---
+                # 통계 수치를 AI에게 전달하기 전, 파이썬에서 퍼센트(%) 형식으로 미리 변환합니다.
                 most_common_patient_id = pd.Series([res['patient_id'] for res in results]).mode()[0]
-                patient_specific_reasons = "상세 정보 없음"
+                patient_specific_reasons_str = "상세 정보 없음"
                 for res in results:
                     if res['patient_id'] == most_common_patient_id:
-                        patient_specific_reasons = res['reasons'].to_markdown(index=False)
+                        reasons_df = res['reasons'].copy()
+                        # '평균 사용률 (%)' 컬럼을 새로 만들어 보기 좋게 포맷팅합니다.
+                        reasons_df['평균 사용률 (%)'] = (reasons_df['평균 사용률'] * 100).map('{:.2f}%'.format)
+                        # AI에게 전달할 컬럼만 선택하여 Markdown 문자열로 변환합니다.
+                        patient_specific_reasons_str = reasons_df[['특성명 (한글)', '평균 사용률 (%)']].to_markdown(index=False)
                         break
 
-                # 2. AI에게 전달할 프롬프트 (가독성 개선: `환자ID` -> **환자ID**)
+                # --- 2. AI 길들이기 (Advanced Prompt Engineering) ---
                 prompt = f"""
+                **CRITICAL INSTRUCTION: Your analysis MUST be based *strictly* on the `Input Data` provided. Do not use external medical knowledge to make definitive statements about drug interactions or clinical appropriateness. Instead, point out the statistical rarity and recommend that a human expert verify the clinical details. Your primary function is to interpret the data, not to act as a clinician.**
+
                 **Your Role & Goal:**
-                You are 'MediCopilot AI', a Multi-Disciplinary Medical AI Reviewer. Your mission is to conduct a comprehensive analysis of the provided anomaly report from multiple expert perspectives. Your final output must be a professional, structured, and deeply insightful briefing document for a hospital's internal review committee and national health regulators.
+                You are 'MediCopilot AI', a Multi-Disciplinary Medical AI Reviewer. Your role is to synthesize the provided data into a structured, objective report for a hospital's internal review committee.
 
                 **Input Data:**
                 - **Total Claims Analyzed:** {total_claims:,}
-                - **Anomalous Patterns Detected:** {total_anomalies:,} (Top {(total_anomalies/total_claims):.2%} of all claims)
-                - **Primary Patient of Interest:** Patient ID **{most_common_patient_id}**. This patient appeared most frequently in the top 20 anomaly list.
-                - **Detailed Anomaly Report for Patient **{most_common_patient_id}** (Rarest combinations found):**
+                - **Anomalous Patterns Detected:** {total_anomalies:,}
+                - **Primary Patient of Interest:** Patient ID **{most_common_patient_id}**.
+                - **Data for Patient **{most_common_patient_id}** (The '평균 사용률 (%)' column shows how often this item appears across all data):**
                 ```markdown
-                {patient_specific_reasons}
+                {patient_specific_reasons_str}
                 ```
 
                 **Mandatory Briefing Framework:**
-                Generate a briefing in Korean. You MUST follow this structure precisely. Do not deviate.
+                Generate a briefing in Korean. You MUST follow this structure precisely.
 
                 ---
 
-                ### MediCopilot AI 다양한 전문가 시각의 통합 분석 보고서
+                ### 🔬 MediCopilot AI 다학제 통합 분석 보고서
 
                 #### **1. 분석 개요 (Executive Summary)**
-                * 분석의 핵심 결과를 2~3문장으로 요약합니다. (총 진료 건수, 이상 패턴 식별 건수, 주요 발견 등)
+                * `Input Data`에 명시된 총 진료 건수, 이상 패턴 식별 건수, 그리고 주요 관심 환자를 요약합니다.
 
                 #### **2. 심층 분석: 주요 관심 환자 (**{most_common_patient_id}**)**
-                * 이 환자가 왜 분석의 핵심 대상으로 선정되었는지 명확히 설명합니다.
+                * 이 환자가 통계적으로 왜 분석의 핵심 대상이 되었는지 `Input Data`에 근거하여 설명합니다.
 
-                #### **3. 의료 전문가 의견 (Multi-Faceted Expert Analysis)**
-                * **3.1. 임상의 및 규제 기관 관점 (Clinical & Regulatory Perspective):**
-                    * 제공된 '상세 이상 패턴 보고서'를 바탕으로, 해당 처방/진단 조합이 표준 임상 프로토콜이나 일반적인 진료 가이드라인에서 벗어나는지 평가하세요.
-                    * 이 패턴이 건강보험심사평가원 등 규제 기관의 심사에서 잠재적으로 삭감 또는 정밀 조사의 대상이 될 가능성이 있는지 전문적으로 서술하세요. 의학적 타당성에 대한 의문을 제기하세요.
+                #### **3. 다각적 전문가 의견 (Multi-Faceted Expert Analysis)**
+                * **3.1. 임상 및 규제 관점 (Clinical & Regulatory Perspective):**
+                    * **(데이터 기반 서술)** '상세 이상 패턴 보고서'에 따르면, 이 환자는 사용률이 매우 낮은 항목들의 조합으로 치료받았습니다.
+                    * **(전문가에게 질문 제기)** 이처럼 통계적으로 희귀한 조합의 의학적 타당성과 표준 진료 가이드라인 부합 여부는 반드시 임상 전문가의 검토가 필요합니다. 이 처방이 건강보험 심사 시 어떤 쟁점을 유발할 수 있는지 검토가 요구됩니다.
 
-                * **3.2. 통계적 관점 (Data Science Perspective):**
-                    * 이 패턴이 왜 통계적 '이상치(Anomaly)'로 탐지되었는지 기술적으로 설명하세요.
-                    * '상세 이상 패턴 보고서'의 '평균 사용률' 데이터를 직접 인용하여, 해당 조합이 전체 데이터셋에서 얼마나 희귀한 이벤트인지 수치적으로 강조하세요. (예: "해당 조합의 평균 사용률은 0.001로, 이는 10만 건의 진료 중 단 1건에서만 발견될 정도의 극히 이례적인 수치입니다.")
+                * **3.2. 데이터 과학자 관점 (Data Science Perspective):**
+                    * **(명확한 통계 제시)** 이 패턴이 통계적 '이상치'로 탐지된 이유는 `Input Data`의 '평균 사용률 (%)' 수치가 명확히 보여줍니다.
+                    * `Input Data`의 '평균 사용률 (%)'을 직접 인용하여, 해당 조합이 전체 데이터에서 얼마나 드물게 발생하는지 설명하세요. (예: "'A 약물'은 전체 진료에서 단 **0.15%**만 사용된 희귀 처방입니다.")
 
-                #### **4. 근본 원인 추론 (Root Cause Hypothesis)**
-                * 탐지된 이상 패턴의 가장 가능성 높은 원인을 다음 두 가지 가설을 바탕으로 추론하고, 어떤 쪽에 더 무게가 실리는지 의견을 제시하세요.
-                    * **가설 A (의료적 판단):** 환자의 특이한 상태로 인한 의학적으로는 타당하지만 통계적으로 희귀한 처방일 가능성.
-                    * **가설 B (행정적 오류):** 진료비 청구 코드 입력 과정에서의 실수(Data Entry Error) 또는 시스템 오류일 가능성.
+                #### **4. 근본 원인에 대한 데이터 기반 추론 (Data-Driven Root Cause Hypothesis)**
+                * **(메타인지적 접근)** 제공된 데이터만으로 근본 원인을 확정할 수는 없지만, 다음과 같은 가설을 세우고 검토를 제안할 수 있습니다.
+                    * **가설 A (의료적 특이성):** 환자의 상태가 매우 특수하여 이례적인 처방이 필요했을 가능성. 이는 `Input Data`만으로는 검증이 불가능하며, 상세한 의무기록 확인이 필요합니다.
+                    * **가설 B (행정적 오류):** 청구 코드 입력 실수 등의 오류 가능성. 데이터의 통계적 희귀성이 매우 높을 경우, 이 가설의 검토 우선순위가 높아질 수 있습니다.
 
-                #### **5. 최종 권고 및 제언 (Final Recommendations)**
-                * 분석 결과를 종합하여, 검토 위원회가 즉시 실행해야 할 구체적인 액션 플랜을 번호를 매겨 3가지 이상 제시하세요.
-                * 이 분석의 명확한 한계점(예: "이 분석은 통계적 희귀성을 기반으로 하며, 실제 의료 행위의 타당성을 최종 판단하는 것은 아님")을 반드시 명시하여, 인간 전문가의 최종 검토가 필수적임을 강조하세요.
+                #### **5. 최종 권고 및 제언 (Final Recommendations & Limitations)**
+                * 1. **(의무기록 대조)** 환자 **{most_common_patient_id}**의 상세 의무기록을 `Input Data`와 대조하여 사실관계를 확인해야 합니다.
+                * 2. **(전문가 검토 의뢰)** 통계적으로 이례적인 이 처방 조합의 의학적 적정성에 대한 임상 전문가의 공식적인 검토를 요청해야 합니다.
+                * 3. **(데이터 입력 프로세스 점검)** 행정적 오류 가능성을 배제하기 위해, 해당 진료 건의 데이터 입력 과정을 점검할 것을 권장합니다.
+                * **(명확한 한계 고지)** **본 AI 보고서는 통계적 이상 패턴을 식별하는 보조 도구이며, 의료 행위의 적정성을 최종 판단하지 않습니다. 모든 결론은 반드시 해당 분야의 인간 전문가에 의해 검토되고 확증되어야 합니다.**
 
                 ---
                 """
@@ -180,15 +177,13 @@ if start_button:
             except Exception as e:
                 st.error(f"AI 브리핑 생성 중 오류가 발생했습니다: {e}")
             
+            # --- 대시보드 및 상세 분석 테이블 (이전과 동일) ---
             st.markdown("---")
-            
-            # --- 분석 결과 상세 대시보드 ---
             st.header("분석 결과 상세 대시보드")
             col1, col2, col3 = st.columns(3)
             col1.metric("총 진료 건수", f"{total_claims:,} 건")
             col2.metric("탐지된 이상치", f"{total_anomalies:,} 건", f"상위 {(total_anomalies/total_claims):.2%}")
             col3.metric("분석된 특성(항목) 수", "500+ 개") 
-            
             tab1, tab2 = st.tabs(["📊 **이상치 요약 및 그래프**", "📑 **Top 20 상세 분석**"])
             with tab1:
                 st.subheader("이상치 분포 시각화")
@@ -198,7 +193,6 @@ if start_button:
                 st.subheader("가장 의심스러운 진료 Top 20")
                 st.info("Rank가 높을수록 패턴이 이질적이라는 의미입니다. 각 항목을 클릭하여 상세 원인을 확인하세요.")
                 for res in reversed(results):
-                    # 여기는 코드 블록(` `)을 사용하는 것이 더 깔끔합니다.
                     expander_title = f"**Rank {res['rank']}** | 환자번호: `{res['patient_id']}` | 진료일: `{res['date']}`"
                     with st.expander(expander_title):
                         st.write("▶ **이 진료가 이상치로 판단된 핵심 이유 (가장 희귀한 조합 Top 5):**")
