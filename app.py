@@ -1,4 +1,4 @@
-# app.py (최종 들여쓰기 오류 수정 완료 버전)
+# app.py (가독성 개선 최종 버전)
 
 import streamlit as st
 import pandas as pd
@@ -10,7 +10,7 @@ import google.generativeai as genai
 
 # --- 페이지 기본 설정 ---
 st.set_page_config(
-    page_title="AI Anomaly Detection System v5.2",
+    page_title="AI Anomaly Detection System v5.3",
     page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -107,8 +107,6 @@ if start_button:
             # --- AI 최종 분석 브리핑 (고급 프롬프트 적용 버전) ---
             st.header("🔬 AI 최종 분석 브리핑")
 
-            # Gemini API 호출을 위한 별도 try 블록
-            # try: 다음의 모든 코드는 반드시 들여쓰기(indentation)가 되어야 합니다.
             try:
                 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
@@ -120,7 +118,7 @@ if start_button:
                         patient_specific_reasons = res['reasons'].to_markdown(index=False)
                         break
 
-                # 2. AI에게 전달할 '다학제 전문가 위원회' 프롬프트 작성
+                # 2. AI에게 전달할 프롬프트 (가독성 개선: `환자ID` -> **환자ID**)
                 prompt = f"""
                 **Your Role & Goal:**
                 You are 'MediCopilot AI', a Multi-Disciplinary Medical AI Reviewer. Your mission is to conduct a comprehensive analysis of the provided anomaly report from multiple expert perspectives. Your final output must be a professional, structured, and deeply insightful briefing document for a hospital's internal review committee and national health regulators.
@@ -128,8 +126,8 @@ if start_button:
                 **Input Data:**
                 - **Total Claims Analyzed:** {total_claims:,}
                 - **Anomalous Patterns Detected:** {total_anomalies:,} (Top {(total_anomalies/total_claims):.2%} of all claims)
-                - **Primary Patient of Interest:** Patient ID `{most_common_patient_id}`.
-                - **Detailed Anomaly Report for Patient `{most_common_patient_id}` (Rarest combinations found):**
+                - **Primary Patient of Interest:** Patient ID **{most_common_patient_id}**. This patient appeared most frequently in the top 20 anomaly list.
+                - **Detailed Anomaly Report for Patient **{most_common_patient_id}** (Rarest combinations found):**
                 ```markdown
                 {patient_specific_reasons}
                 ```
@@ -139,20 +137,20 @@ if start_button:
 
                 ---
 
-                ### 🔬 MediCopilot AI 다학제 통합 분석 보고서
+                ### MediCopilot AI 다양한 전문가 시각의 통합 분석 보고서
 
                 #### **1. 분석 개요 (Executive Summary)**
                 * 분석의 핵심 결과를 2~3문장으로 요약합니다. (총 진료 건수, 이상 패턴 식별 건수, 주요 발견 등)
 
-                #### **2. 심층 분석: 주요 관심 환자 (`{most_common_patient_id}`)**
+                #### **2. 심층 분석: 주요 관심 환자 (**{most_common_patient_id}**)**
                 * 이 환자가 왜 분석의 핵심 대상으로 선정되었는지 명확히 설명합니다.
 
-                #### **3. 다각적 전문가 의견 (Multi-Faceted Expert Analysis)**
+                #### **3. 의료 전문가 의견 (Multi-Faceted Expert Analysis)**
                 * **3.1. 임상의 및 규제 기관 관점 (Clinical & Regulatory Perspective):**
                     * 제공된 '상세 이상 패턴 보고서'를 바탕으로, 해당 처방/진단 조합이 표준 임상 프로토콜이나 일반적인 진료 가이드라인에서 벗어나는지 평가하세요.
                     * 이 패턴이 건강보험심사평가원 등 규제 기관의 심사에서 잠재적으로 삭감 또는 정밀 조사의 대상이 될 가능성이 있는지 전문적으로 서술하세요. 의학적 타당성에 대한 의문을 제기하세요.
 
-                * **3.2. 데이터 과학자 관점 (Data Science Perspective):**
+                * **3.2. 통계적 관점 (Data Science Perspective):**
                     * 이 패턴이 왜 통계적 '이상치(Anomaly)'로 탐지되었는지 기술적으로 설명하세요.
                     * '상세 이상 패턴 보고서'의 '평균 사용률' 데이터를 직접 인용하여, 해당 조합이 전체 데이터셋에서 얼마나 희귀한 이벤트인지 수치적으로 강조하세요. (예: "해당 조합의 평균 사용률은 0.001로, 이는 10만 건의 진료 중 단 1건에서만 발견될 정도의 극히 이례적인 수치입니다.")
 
@@ -200,6 +198,7 @@ if start_button:
                 st.subheader("가장 의심스러운 진료 Top 20")
                 st.info("Rank가 높을수록 패턴이 이질적이라는 의미입니다. 각 항목을 클릭하여 상세 원인을 확인하세요.")
                 for res in reversed(results):
+                    # 여기는 코드 블록(` `)을 사용하는 것이 더 깔끔합니다.
                     expander_title = f"**Rank {res['rank']}** | 환자번호: `{res['patient_id']}` | 진료일: `{res['date']}`"
                     with st.expander(expander_title):
                         st.write("▶ **이 진료가 이상치로 판단된 핵심 이유 (가장 희귀한 조합 Top 5):**")
