@@ -1,4 +1,4 @@
-# app.py (최종 오류 수정 및 기능 개선 완료 버전)
+# app.py (최종 들여쓰기 오류 수정 완료 버전)
 
 import streamlit as st
 import pandas as pd
@@ -10,7 +10,7 @@ import google.generativeai as genai
 
 # --- 페이지 기본 설정 ---
 st.set_page_config(
-    page_title="AI Anomaly Detection System v5.1",
+    page_title="AI Anomaly Detection System v5.2",
     page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -62,7 +62,6 @@ if not start_button:
 
 if start_button:
     if 'files_ready' in st.session_state:
-        # 전체 분석 과정을 감싸는 try 블록입니다.
         try:
             # --- AI 분석 프로세스 바 ---
             st.header("AI 분석 프로세스")
@@ -109,79 +108,79 @@ if start_button:
             st.header("🔬 AI 최종 분석 브리핑")
 
             # Gemini API 호출을 위한 별도 try 블록
+            # try: 다음의 모든 코드는 반드시 들여쓰기(indentation)가 되어야 합니다.
             try:
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-    # 1. AI에게 제공할 상세 데이터 가공 (기존과 동일)
-    most_common_patient_id = pd.Series([res['patient_id'] for res in results]).mode()[0]
-    patient_specific_reasons = "상세 정보 없음"
-    for res in results:
-        if res['patient_id'] == most_common_patient_id:
-            patient_specific_reasons = res['reasons'].to_markdown(index=False)
-            break
+                # 1. AI에게 제공할 상세 데이터 가공
+                most_common_patient_id = pd.Series([res['patient_id'] for res in results]).mode()[0]
+                patient_specific_reasons = "상세 정보 없음"
+                for res in results:
+                    if res['patient_id'] == most_common_patient_id:
+                        patient_specific_reasons = res['reasons'].to_markdown(index=False)
+                        break
 
-    # 2. AI에게 전달할 '다학제 전문가 위원회' 프롬프트 작성
-    prompt = f"""
-    **Your Role & Goal:**
-    You are 'MediCopilot AI', a Multi-Disciplinary Medical AI Reviewer. Your mission is to conduct a comprehensive analysis of the provided anomaly report from multiple expert perspectives. Your final output must be a professional, structured, and deeply insightful briefing document for a hospital's internal review committee and national health regulators.
+                # 2. AI에게 전달할 '다학제 전문가 위원회' 프롬프트 작성
+                prompt = f"""
+                **Your Role & Goal:**
+                You are 'MediCopilot AI', a Multi-Disciplinary Medical AI Reviewer. Your mission is to conduct a comprehensive analysis of the provided anomaly report from multiple expert perspectives. Your final output must be a professional, structured, and deeply insightful briefing document for a hospital's internal review committee and national health regulators.
 
-    **Input Data:**
-    - **Total Claims Analyzed:** {total_claims:,}
-    - **Anomalous Patterns Detected:** {total_anomalies:,} (Top {(total_anomalies/total_claims):.2%} of all claims)
-    - **Primary Patient of Interest:** Patient ID `{most_common_patient_id}`.
-    - **Detailed Anomaly Report for Patient `{most_common_patient_id}` (Rarest combinations found):**
-    ```markdown
-    {patient_specific_reasons}
-    ```
+                **Input Data:**
+                - **Total Claims Analyzed:** {total_claims:,}
+                - **Anomalous Patterns Detected:** {total_anomalies:,} (Top {(total_anomalies/total_claims):.2%} of all claims)
+                - **Primary Patient of Interest:** Patient ID `{most_common_patient_id}`.
+                - **Detailed Anomaly Report for Patient `{most_common_patient_id}` (Rarest combinations found):**
+                ```markdown
+                {patient_specific_reasons}
+                ```
 
-    **Mandatory Briefing Framework:**
-    Generate a briefing in Korean. You MUST follow this structure precisely. Do not deviate.
+                **Mandatory Briefing Framework:**
+                Generate a briefing in Korean. You MUST follow this structure precisely. Do not deviate.
 
-    ---
+                ---
 
-    ### 🔬 MediCopilot AI 다학제 통합 분석 보고서
+                ### 🔬 MediCopilot AI 다학제 통합 분석 보고서
 
-    #### **1. 분석 개요 (Executive Summary)**
-    * 분석의 핵심 결과를 2~3문장으로 요약합니다. (총 진료 건수, 이상 패턴 식별 건수, 주요 발견 등)
+                #### **1. 분석 개요 (Executive Summary)**
+                * 분석의 핵심 결과를 2~3문장으로 요약합니다. (총 진료 건수, 이상 패턴 식별 건수, 주요 발견 등)
 
-    #### **2. 심층 분석: 주요 관심 환자 (`{most_common_patient_id}`)**
-    * 이 환자가 왜 분석의 핵심 대상으로 선정되었는지 명확히 설명합니다.
+                #### **2. 심층 분석: 주요 관심 환자 (`{most_common_patient_id}`)**
+                * 이 환자가 왜 분석의 핵심 대상으로 선정되었는지 명확히 설명합니다.
 
-    #### **3. 다각적 전문가 의견 (Multi-Faceted Expert Analysis)**
-    * **3.1. 임상의 및 규제 기관 관점 (Clinical & Regulatory Perspective):**
-        * 제공된 '상세 이상 패턴 보고서'를 바탕으로, 해당 처방/진단 조합이 표준 임상 프로토콜이나 일반적인 진료 가이드라인에서 벗어나는지 평가하세요.
-        * 이 패턴이 건강보험심사평가원 등 규제 기관의 심사에서 잠재적으로 삭감 또는 정밀 조사의 대상이 될 가능성이 있는지 전문적으로 서술하세요. 의학적 타당성에 대한 의문을 제기하세요.
+                #### **3. 다각적 전문가 의견 (Multi-Faceted Expert Analysis)**
+                * **3.1. 임상의 및 규제 기관 관점 (Clinical & Regulatory Perspective):**
+                    * 제공된 '상세 이상 패턴 보고서'를 바탕으로, 해당 처방/진단 조합이 표준 임상 프로토콜이나 일반적인 진료 가이드라인에서 벗어나는지 평가하세요.
+                    * 이 패턴이 건강보험심사평가원 등 규제 기관의 심사에서 잠재적으로 삭감 또는 정밀 조사의 대상이 될 가능성이 있는지 전문적으로 서술하세요. 의학적 타당성에 대한 의문을 제기하세요.
 
-    * **3.2. 데이터 과학자 관점 (Data Science Perspective):**
-        * 이 패턴이 왜 통계적 '이상치(Anomaly)'로 탐지되었는지 기술적으로 설명하세요.
-        * '상세 이상 패턴 보고서'의 '평균 사용률' 데이터를 직접 인용하여, 해당 조합이 전체 데이터셋에서 얼마나 희귀한 이벤트인지 수치적으로 강조하세요. (예: "해당 조합의 평균 사용률은 0.001로, 이는 10만 건의 진료 중 단 1건에서만 발견될 정도의 극히 이례적인 수치입니다.")
+                * **3.2. 데이터 과학자 관점 (Data Science Perspective):**
+                    * 이 패턴이 왜 통계적 '이상치(Anomaly)'로 탐지되었는지 기술적으로 설명하세요.
+                    * '상세 이상 패턴 보고서'의 '평균 사용률' 데이터를 직접 인용하여, 해당 조합이 전체 데이터셋에서 얼마나 희귀한 이벤트인지 수치적으로 강조하세요. (예: "해당 조합의 평균 사용률은 0.001로, 이는 10만 건의 진료 중 단 1건에서만 발견될 정도의 극히 이례적인 수치입니다.")
 
-    #### **4. 근본 원인 추론 (Root Cause Hypothesis)**
-    * 탐지된 이상 패턴의 가장 가능성 높은 원인을 다음 두 가지 가설을 바탕으로 추론하고, 어떤 쪽에 더 무게가 실리는지 의견을 제시하세요.
-        * **가설 A (의료적 판단):** 환자의 특이한 상태로 인한 의학적으로는 타당하지만 통계적으로 희귀한 처방일 가능성.
-        * **가설 B (행정적 오류):** 진료비 청구 코드 입력 과정에서의 실수(Data Entry Error) 또는 시스템 오류일 가능성.
+                #### **4. 근본 원인 추론 (Root Cause Hypothesis)**
+                * 탐지된 이상 패턴의 가장 가능성 높은 원인을 다음 두 가지 가설을 바탕으로 추론하고, 어떤 쪽에 더 무게가 실리는지 의견을 제시하세요.
+                    * **가설 A (의료적 판단):** 환자의 특이한 상태로 인한 의학적으로는 타당하지만 통계적으로 희귀한 처방일 가능성.
+                    * **가설 B (행정적 오류):** 진료비 청구 코드 입력 과정에서의 실수(Data Entry Error) 또는 시스템 오류일 가능성.
 
-    #### **5. 최종 권고 및 제언 (Final Recommendations)**
-    * 분석 결과를 종합하여, 검토 위원회가 즉시 실행해야 할 구체적인 액션 플랜을 번호를 매겨 3가지 이상 제시하세요.
-    * 이 분석의 명확한 한계점(예: "이 분석은 통계적 희귀성을 기반으로 하며, 실제 의료 행위의 타당성을 최종 판단하는 것은 아님")을 반드시 명시하여, 인간 전문가의 최종 검토가 필수적임을 강조하세요.
+                #### **5. 최종 권고 및 제언 (Final Recommendations)**
+                * 분석 결과를 종합하여, 검토 위원회가 즉시 실행해야 할 구체적인 액션 플랜을 번호를 매겨 3가지 이상 제시하세요.
+                * 이 분석의 명확한 한계점(예: "이 분석은 통계적 희귀성을 기반으로 하며, 실제 의료 행위의 타당성을 최종 판단하는 것은 아님")을 반드시 명시하여, 인간 전문가의 최종 검토가 필수적임을 강조하세요.
 
-    ---
-    """
-    
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    response = model.generate_content(prompt, stream=True)
+                ---
+                """
+                
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content(prompt, stream=True)
 
-    with st.chat_message("ai", avatar="🤖"):
-        report_placeholder = st.empty()
-        full_response = ""
-        for chunk in response:
-            full_response += chunk.text
-            report_placeholder.markdown(full_response + "▌", unsafe_allow_html=True)
-        report_placeholder.markdown(full_response, unsafe_allow_html=True)
+                with st.chat_message("ai", avatar="🤖"):
+                    report_placeholder = st.empty()
+                    full_response = ""
+                    for chunk in response:
+                        full_response += chunk.text
+                        report_placeholder.markdown(full_response + "▌", unsafe_allow_html=True)
+                    report_placeholder.markdown(full_response, unsafe_allow_html=True)
 
-except Exception as e:
-    st.error(f"AI 브리핑 생성 중 오류가 발생했습니다: {e}")
-
+            except Exception as e:
+                st.error(f"AI 브리핑 생성 중 오류가 발생했습니다: {e}")
             
             st.markdown("---")
             
@@ -206,7 +205,6 @@ except Exception as e:
                         st.write("▶ **이 진료가 이상치로 판단된 핵심 이유 (가장 희귀한 조합 Top 5):**")
                         st.dataframe(res['reasons'], use_container_width=True) 
 
-        # 전체 분석 과정을 감싸는 try에 대한 except 블록입니다.
         except Exception as e:
             st.error(f"분석 중 오류가 발생했습니다: {e}")
             st.exception(e)
