@@ -105,34 +105,49 @@ if start_button:
             st.success("🎉 모든 분석 과정이 성공적으로 완료되었습니다!")
             st.markdown("---")
             
-            # --- AI 최종 분석 브리핑 ---
-            st.header("🔬 AI 최종 분석 브리핑")
+          # (app.py의 다른 부분은 그대로 둡니다)
+# ...
+        st.success("🎉 모든 분석 과정이 성공적으로 완료되었습니다!")
+        st.markdown("---")
+        
+        # --- AI 최종 분석 브리핑 (Gemini API 연동 버전) ---
+        import google.generativeai as genai
+
+        st.header("🔬 AI 최종 분석 브리핑")
+
+        try:
+            # st.secrets를 사용해 API 키를 안전하게 불러옵니다.
+            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
+            prompt = f"""
+            당신은 의료 데이터 분석 전문가 'MediCopilot AI'입니다. 아래 분석 결과를 바탕으로, 핵심 요약, 주목할 만한 패턴, 권장 조치를 포함한 전문적인 브리핑 리포트를 생성해주세요. 친절하고 신뢰감 있는 전문가 톤으로, 마크다운을 사용하여 가독성 좋게 작성해주세요.
+
+            ### **분석 결과 데이터**
+            - **총 분석 진료 건수:** {total_claims:,}건
+            - **탐지된 이상치 건수:** {total_anomalies:,}건 (전체의 {(total_anomalies/total_claims):.2%})
+            - **주요 패턴:** 이상치 Top 20 리스트에서 '환자번호 {pd.Series([res['patient_id'] for res in results]).mode()[0]}'가 총 {pd.Series([res['patient_id'] for res in results]).value_counts().max()}회로 가장 많이 발견되었습니다.
+
+            ### **브리핑 작성 가이드**
+            1.  **인사 및 개요:** 분석 완료를 알리고, 총 몇 건을 분석하여 몇 건의 이상 패턴을 찾았는지 요약합니다.
+            2.  **핵심 발견(Key Finding):** 가장 주목할 만한 패턴을 구체적인 수치와 함께 강조하여 설명합니다.
+            3.  **권장 조치(Recommendation):** 분석 결과를 바탕으로 사용자가 다음으로 무엇을 해야 할지 명확하게 제안합니다.
+            """
+            
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(prompt, stream=True)
 
             with st.chat_message("ai", avatar="🤖"):
                 report_placeholder = st.empty()
-                
-                patient_ids = [res['patient_id'] for res in results]
-                if patient_ids:
-                    most_common_patient = pd.Series(patient_ids).mode()[0]
-                    count = patient_ids.count(most_common_patient)
-                    key_finding = f"가장 주목할 만한 패턴은 특정 환자에게서 이상치가 집중적으로 발견된 점입니다. 특히 **환자번호 `{most_common_patient}`**는 Top 20 리스트에 <span style='color: #00f4d4;'>**{count}회**</span> 등장하여, 해당 환자의 진료 이력에 대한 심층 검토가 필요해 보입니다. \n\n"
-                else:
-                    key_finding = "탐지된 이상치 중에서 특별히 집중되는 패턴은 발견되지 않았습니다. \n\n"
-                
-                summary_text = f"> **분석 요약:** 총 <span style='color: #00f4d4;'>**{total_claims:,}**</span>건의 진료 기록을 분석하여, <span style='color: #00f4d4;'>**{total_anomalies:,}**</span>건의 통계적 이상 패턴을 식별했습니다. \n\n"
-                recommendation_text = "> **권장 조치:** 이제부터 각 이상 건의 상세 분석을 통해, 이례적인 처방/진단 조합의 의학적 타당성을 확인하시는 것을 권장합니다."
-                
-                full_briefing_text = f"안녕하세요. 요청하신 진료 데이터에 대한 심층 분석을 완료했습니다. \n\n{summary_text}{key_finding}{recommendation_text}"
-
                 full_response = ""
-                for chunk in full_briefing_text:
-                    full_response += chunk
-                    time.sleep(0.02)
+                for chunk in response:
+                    full_response += chunk.text
                     report_placeholder.markdown(full_response + "▌", unsafe_allow_html=True)
-                
                 report_placeholder.markdown(full_response, unsafe_allow_html=True)
-            
-            st.markdown("---")
+
+        except Exception as e:
+            st.error("AI 브리핑 생성 중 오류가 발생했습니다. .streamlit/secrets.toml 파일에 API 키가 올바르게 설정되었는지 확인해주세요.")
+# ...
+# (app.py의 나머지 부분은 그대로 둡니다)
             
             # --- 분석 결과 상세 대시보드 ---
             st.header("분석 결과 상세 대시보드")
