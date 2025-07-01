@@ -1,4 +1,4 @@
-# app.py (최종 전문가 판단 및 가독성 개선)
+# app.py (최종 완성본)
 
 import streamlit as st
 import pandas as pd
@@ -10,7 +10,7 @@ import google.generativeai as genai
 
 # --- 페이지 기본 설정 ---
 st.set_page_config(
-    page_title="AI Anomaly Detection System v13.0",
+    page_title="AI Anomaly Detection System v14.0",
     page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -110,38 +110,38 @@ if start_button:
                 prompt = f"""
                 **CRITICAL DIRECTIVE:**
                 Your persona is an **Elite AI Medical Analyst**. Your tone is direct, professional, and provides actionable intelligence for a senior clinician.
-                1.  **CITE THE DATA:** You MUST explicitly use the specific names and numbers from the `Input Data` to support every judgment.
-                2.  **NO HALLUCINATION:** Your judgments are based *only* on the statistical patterns provided. Do not invent clinical facts.
-                3.  **SEAMLESS TEXT:** Your entire response must be a single, continuous text. Do not use any boxes, backticks (` `), or code blocks (```). Emphasize with bolding (`**text**`) only.
-                4.  **SUBSTANTIAL ANALYSIS:** Each numbered section must contain a detailed analysis of at least 5 lines.
+                1.  **DEEP DIVE ANALYSIS:** You MUST provide a comprehensive and detailed analysis for each section. For the clinical perspective, there is no line limit; provide the most thorough analysis possible.
+                2.  **CITE THE DATA:** You MUST explicitly use the specific names and numbers from the `Case File Data` to support every judgment.
+                3.  **NO HALLUCINATION:** Your judgments are based *only* on the statistical patterns provided. Do not invent clinical facts.
+                4.  **SEAMLESS TEXT:** Your entire response must be a single, continuous text. Do not use any boxes, backticks (` `), or code blocks (```). Emphasize with bolding (`**text**`) only.
 
-                **Input Data:**
+                **Case File Data for Review:**
                 - **Primary Patient of Interest:** Patient ID **{most_common_patient_id}**
-                - **Data for Patient **{most_common_patient_id}** (This is the core evidence for your judgment):**
+                - **Key Evidence for Patient **{most_common_patient_id}** (This is the core evidence for your judgment):**
                 ```markdown
                 {patient_specific_reasons_str}
                 ```
 
-                **Mandatory Briefing Framework (For each section, adopt the persona and render a decisive judgment):**
+                **Mandatory Briefing Framework (For each section, adopt the persona and render a decisive, detailed judgment):**
 
                 ---
 
-                ### **🔬 MediCopilot AI: 전문가 위원회 최종 판단**
+                ### **MediCopilot AI: 전문가 위원회 최종 판단**
 
                 #### **1. 임상의학 전문가 (정신과) 최종 소견**
-                **판단:** `Input Data`에 따르면, 환자 **{most_common_patient_id}**에게 **(여기서 Input Data 테이블의 '특성명 (한글)' 컬럼에서 가장 이례적인 약물명 2-3개를 직접 언급하세요)** 등이 동시에 처방되었습니다. 이 조합은 표준 임상 프로토콜에서 심각하게 벗어난 것으로 보입니다. 특히 항정신병제와 식욕억제제의 병용은 약물 상호작용 및 부작용 위험을 크게 높일 수 있어, **의학적 타당성을 입증할 명백한 근거가 없다면 부적절한 처방으로 판단**됩니다. 이는 의사의 전문적 판단을 의심하는 것이 아니라, 해당 처방이 일반적인 진료의 범주를 벗어난 통계적 특이성을 보이므로, **표준 진료 프로토콜과의 차이점을 스스로 재점검하고 그 근거를 명확히 할 필요가 있음을 시사**합니다.
+                **판단:** 환자 **{most_common_patient_id}**의 사례는 단순한 통계적 이상을 넘어, 임상적 관점에서 심각한 주의를 요하는 케이스로 판단됩니다. Key Evidence에 따르면, **(여기서 Case File Data 테이블의 '특성명 (한글)' 컬럼에서 가장 이례적인 약물명 2-3개를 직접 언급하세요)** 등이 동시에 처방되었습니다. 특히, 항정신병 계열 약물과 식욕억제제의 병용 처방은 표준 임상 프로토콜에서 매우 이례적인 조합입니다. 이러한 처방은 약물 간 상호작용(Drug-Drug Interaction)으로 인한 예상치 못한 부작용의 위험을 크게 높일 수 있으며, 각 약물의 대사 과정에 영향을 주어 치료 효과를 저해하거나 독성을 증폭시킬 수 있습니다. 이는 의사의 전문적 판단을 의심하는 것이 아니라, 해당 처방이 일반적인 진료의 범주를 벗어난 통계적 특이성을 보이므로, **표준 진료 프로토콜과의 차이점을 스스로 재점검하고 그 의학적 근거를 명확히 할 필요가 있음을 강력하게 시사**합니다.
 
                 #### **2. 보건복지부 행정 심사관 최종 결정**
-                **결정:** `Input Data`에서 확인된 처방 조합은 통계적 희귀성으로 인해 **건강보험심사평가원의 심사 조정(삭감) 대상이 될 확률이 매우 높습니다.** 예를 들어, **(여기서 Input Data 테이블에서 사용률이 가장 낮은 항목의 이름과 '평균 사용률 (%)'을 정확히 인용하세요)**와 같은 처방은 그 자체만으로도 정밀 심사 대상입니다. 심사관의 입장에서 볼 때, 이러한 통계적 이상치는 명확한 소명 자료가 없다면 '과잉 진료' 또는 '착오 청구'로 해석될 여지가 충분합니다. **결정적으로, 이 청구 건은 '요주의 사례'로 분류하고, 처방의 타당성을 입증하는 상세한 소명 자료 제출을 즉시 요구해야 합니다.** 자료가 미비할 경우, 관련 진료비 전액 삭감까지도 고려될 수 있습니다.
+                **결정:** Key Evidence에서 확인된 처방 조합은 통계적 희귀성으로 인해 **건강보험심사평가원의 심사 조정(삭감) 대상이 될 확률이 매우 높습니다.** 예를 들어, **(여기서 Case File Data 테이블에서 사용률이 가장 낮은 항목의 이름과 '평균 사용률 (%)'을 정확히 인용하세요)**와 같은 처방은 그 자체만으로도 정밀 심사 대상입니다. 심사관의 입장에서 볼 때, 이러한 통계적 이상치는 명확한 소명 자료가 없다면 '과잉 진료' 또는 '착오 청구'로 해석될 여지가 충분합니다. **결정적으로, 이 청구 건은 '요주의 사례'로 분류하고, 처방의 타당성을 입증하는 상세한 소명 자료 제출을 즉시 요구해야 합니다.** 자료가 미비할 경우, 관련 진료비 전액 삭감까지도 고려될 수 있습니다.
 
                 #### **3. 데이터 통계 전문가 최종 분석**
-                **분석:** 통계적으로, 이 패턴은 우연으로 보기 어려운 **극단적인 이상치(Extreme Outlier)**입니다. 핵심은 개별 항목의 희귀성이 아니라, **이러한 희귀한 사건들이 동시에 발생했다는 '조합'의 희귀성**에 있습니다. 예를 들어, `Input Data`의 **(여기서 Input Data 테이블의 항목과 '평균 사용률 (%)'을 2개 인용하세요. 예: "'A약물'은 100명의 환자 중 0.15명에게만, 'B진단'은 0.50명에게만 나타납니다.")** 이 두 사건이 독립적이라 가정할 때, 두 사건이 동시에 발생할 확률은 두 확률의 곱으로 훨씬 더 희박해집니다. 이처럼 강력한 통계적 증거는 이 패턴이 결코 일반적인 진료 행위가 아님을 명백히 보여줍니다.
+                **분석:** 통계적으로, 이 패턴은 우연으로 보기 어려운 **극단적인 이상치(Extreme Outlier)**입니다. 핵심은 개별 항목의 희귀성이 아니라, **이러한 희귀한 사건들이 동시에 발생했다는 '조합'의 희귀성**에 있습니다. 예를 들어, Key Evidence의 **(여기서 Case File Data 테이블의 항목과 '평균 사용률 (%)'을 2개 인용하세요. 예: "'A약물'은 100명의 환자 중 0.15명에게만, 'B진단'은 0.50명에게만 나타납니다.")** 이 두 사건이 독립적이라 가정할 때, 두 사건이 동시에 발생할 확률은 두 확률의 곱으로 훨씬 더 희박해집니다. 이처럼 강력한 통계적 증거는 이 패턴이 결코 일반적인 진료 행위가 아님을 명백히 보여줍니다.
 
                 #### **4. 종합 결론: 임상적 특이성 vs. 데이터 입력 오류**
                 **판단:** 위 전문가 의견들을 종합할 때, 이 극단적인 통계적 이상치는 두 가지 가능성을 시사합니다. 첫째는 환자의 매우 희귀한 임상적 특이성으로 인한 필연적 처방일 가능성입니다. 둘째는, 그리고 통계적으로 더 빈번하게 발생하는, **행정 착오, 즉 '데이터 입력 오류'일 가능성**입니다. 처방전이나 의무기록의 내용을 청구 시스템에 옮기는 과정에서 실수가 발생했을 확률은 언제나 존재합니다. 따라서, **가장 먼저 확인해야 할 사항은 의사의 실제 처방과 청구 데이터가 100% 일치하는지 여부를 검증하는 것**입니다. 이것이 의사의 진료 판단에 대한 문제를 논하기 전, 가장 객관적이고 합리적인 첫 단계입니다.
 
                 ---
-                **면책 조항:** 본 AI의 판단은 제공된 통계 데이터에 기반한 추론이며, 최종적인 의료적/법적 책임은 해당 분야의 인간 전문가에게 있습니다.
+                **면책 조항:** 본 AI의 판단은 제공된 통계 데이터에 기반한 참고용 추론이며, 최종적인 의료적/법적 책임은 사용자에게 있습니다.
                 """
                 
                 model = genai.GenerativeModel('gemini-1.5-flash')
